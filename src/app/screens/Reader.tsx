@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
 import type { Block, Section, SomethingDocument } from "@core/model/types";
+import { sentenceBounds } from "@core/text/sentences";
 import { Button, FocusWord, Icon, Sheet, Slider, Typing, WheelPicker } from "@ui/components";
 import { copy } from "@ui/copy";
 import { useSettings } from "../providers/settings-context";
@@ -388,8 +389,6 @@ const TextStage = ({
  * what makes the pace legible — you can see how the rhythm slows at a full
  * stop and quickens through short words, which a single moving mark hides.
  */
-const SENTENCE_END = /[.!?…]["'\u201d\u2019)\]]*\s+/g;
-
 const TrackedText = ({ text, cursor }: { text: string; cursor: number }) => {
   const { words, sentences } = useMemo(() => {
     const found: { text: string; start: number }[] = [];
@@ -397,12 +396,9 @@ const TrackedText = ({ text, cursor }: { text: string; cursor: number }) => {
     let match: RegExpExecArray | null;
     while ((match = wordRe.exec(text)) !== null) found.push({ text: match[0], start: match.index });
 
-    // Sentence boundaries, so the current clause can be washed as a unit.
-    const bounds: number[] = [0];
-    SENTENCE_END.lastIndex = 0;
-    while ((match = SENTENCE_END.exec(text)) !== null) bounds.push(match.index + match[0].length);
-    bounds.push(text.length);
-    return { words: found, sentences: bounds };
+    // The same boundaries the narrator speaks by, so the wash cannot land on a
+    // different clause than the voice is saying.
+    return { words: found, sentences: sentenceBounds(text) };
   }, [text]);
 
   let sentenceStart = 0;
