@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, FocusWord, Icon, Menu, Segmented, Swatches, useToast, type IconName } from "@ui/components";
+import { Button, FocusWord, Icon, Menu, Segmented, Slider, Swatches, useToast, type IconName } from "@ui/components";
 import { copy } from "@ui/copy";
 import { clearAll, estimateUsage } from "@core/storage/idb";
 import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
@@ -99,15 +99,14 @@ export const SettingsScreen = () => {
           <Menu label={copy.font} value={settings.font} items={FONTS} onChange={(font) => update({ font })} />
         </Row>
         <Row icon="gauge" label={copy.pace} hint={`${settings.wpm} WPM`}>
-          <input
-            className="slider"
-            type="range"
+          <Slider
+            label={copy.pace}
             min={100}
             max={800}
             step={10}
             value={settings.wpm}
-            aria-label={copy.pace}
-            onChange={(event) => update({ wpm: Number(event.target.value) })}
+            valueText={`${settings.wpm} words per minute`}
+            onChange={(wpm) => update({ wpm })}
           />
         </Row>
         <Row icon="chunk" label={copy.words}>

@@ -661,11 +661,6 @@
   transition: background-color var(--dur-control) var(--ease);
 }
 
-.prose .block.is-active {
-  background: var(--accent-wash);
-  box-shadow: -10px 0 0 var(--accent-wash), 10px 0 0 var(--accent-wash);
-}
-
 .prose h2,
 .prose h3 {
   font-family: var(--font-ui);
@@ -991,8 +986,6 @@
 
 .prose .block.is-active {
   position: relative;
-  background: var(--accent-wash);
-  box-shadow: -10px 0 0 var(--accent-wash), 10px 0 0 var(--accent-wash);
 }
 
 /* Rules running to the edges, echoing the focus guides. */
@@ -1015,20 +1008,40 @@
   left: calc(100% + var(--space-4));
 }
 
-/* The reading mark: the word the engine is on, grifado in place. */
+/*
+ * The reading trail. Three weights of the same amber: what has been read, the
+ * sentence being read, and the word under the engine.
+ */
 .word {
-  border-radius: 4px;
-  transition: background-color var(--dur-press) ease-out, color var(--dur-press) ease-out;
+  border-radius: 3px;
+  transition:
+    background-color var(--dur-control) var(--ease),
+    color var(--dur-press) ease-out;
+}
+
+.word.is-read {
+  background: color-mix(in srgb, var(--anchor) 10%, transparent);
+}
+
+.word.in-sentence {
+  background: color-mix(in srgb, var(--anchor) 18%, transparent);
 }
 
 .word.is-now {
   background: var(--anchor);
   color: var(--accent-ink);
-  box-shadow: 0 0 0 2px var(--anchor);
+  box-shadow: 0 0 0 1.5px var(--anchor);
+  border-radius: 4px;
 }
 
 :root[data-theme="paper"] .word.is-now {
   color: var(--surface);
+}
+
+/* Paragraphs already passed keep a whisper of the trail, so progress through
+   the whole document is visible without scrolling back. */
+.prose .block.is-read {
+  color: color-mix(in srgb, var(--text-read) 74%, transparent);
 }
 
 .jump {

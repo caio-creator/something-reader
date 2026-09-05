@@ -597,3 +597,102 @@
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to { opacity: 1; transform: none; }
 }
+
+
+/* ---------- slider ---------- */
+
+.slider-root {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.slider {
+  --track: 5px;
+  --thumb: 20px;
+  width: 100%;
+  height: var(--thumb);
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: grab;
+}
+
+.slider:active {
+  cursor: grabbing;
+}
+
+/* The filled portion is drawn on the track itself, so it stays one element. */
+.slider::-webkit-slider-runnable-track {
+  height: var(--track);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(var(--accent), var(--accent)) 0 / var(--fill, 0%) 100% no-repeat,
+    var(--surface-3);
+}
+
+.slider::-moz-range-track {
+  height: var(--track);
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+}
+
+.slider::-moz-range-progress {
+  height: var(--track);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  margin-top: calc((var(--track) - var(--thumb)) / 2);
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  transition: transform var(--dur-press) ease-out;
+}
+
+.slider::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  transition: transform var(--dur-press) ease-out;
+}
+
+@media (hover: hover) {
+  .slider:hover::-webkit-slider-thumb { transform: scale(1.12); }
+  .slider:hover::-moz-range-thumb { transform: scale(1.12); }
+}
+
+.slider:active::-webkit-slider-thumb { transform: scale(1.2); }
+.slider:active::-moz-range-thumb { transform: scale(1.2); }
+
+.slider:focus-visible { outline: none; }
+
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
+}
+
+.slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--accent);
+}
+
+.slider:disabled {
+  cursor: not-allowed;
+}
+
+.slider:disabled::-webkit-slider-thumb { background: var(--text-4); }
+.slider:disabled::-moz-range-thumb { background: var(--text-4); }
+
+.slider-readout {
+  justify-self: end;
+  font-size: var(--step-eyebrow);
+  letter-spacing: 0.08em;
+  color: var(--text-3);
+}

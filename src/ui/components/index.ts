@@ -5,6 +5,7 @@ export { Menu, type MenuItem } from "./Menu";
 export { Ring } from "./Ring";
 export { Segmented, type Option } from "./Segmented";
 export { Sheet } from "./Sheet";
+export { Slider } from "./Slider";
 export { Swatches } from "./Swatches";
 export { TabBar, type TabKey } from "./TabBar";
 export { ToastProvider, useToast } from "./Toast";

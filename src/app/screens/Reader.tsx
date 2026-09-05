@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
 import type { Block, Section, SomethingDocument } from "@core/model/types";
-import { Button, FocusWord, Icon, Sheet, WheelPicker } from "@ui/components";
+import { Button, FocusWord, Icon, Sheet, Slider, WheelPicker } from "@ui/components";
 import { copy } from "@ui/copy";
 import { useSettings } from "../providers/settings-context";
 import { estimateMs, timecode, timeLeft } from "../format";
@@ -106,15 +106,13 @@ export const Reader = ({
         <div className="dock">
           <div className="dock-scrub">
             <span className="mono">{timecode(snapshot.elapsedMs)}</span>
-            <input
-              type="range"
+            <Slider
+              label="Position"
               min={0}
               max={Math.max(0, snapshot.length - 1)}
               value={snapshot.index}
-              aria-label="Position"
-              aria-valuetext={`${Math.round(snapshot.progress * 100)}%`}
-              className="slider"
-              onChange={(event) => engine.current?.seek(Number(event.target.value))}
+              valueText={`${Math.round(snapshot.progress * 100)} percent`}
+              onChange={(index) => engine.current?.seek(index)}
             />
             <span className="mono">{timecode(snapshot.remainingMs)}</span>
           </div>
@@ -281,14 +279,34 @@ const TextStage = ({
   const onScrolledToRef = useRef(onScrolledTo);
   onScrolledToRef.current = onScrolledTo;
 
-  // Scrolling moves the shared position — but only when the reader is doing the
-  // scrolling. While playing, the page follows the highlight instead, and a
-  // scroll listener would fight the engine for the same value.
+  // Scrolling moves the shared position, but only when the *reader* is doing
+  // the scrolling. An observer fires as soon as it attaches, so gating on
+  // "not playing" was not enough: pausing re-attached it and it immediately
+  // wrote the top visible paragraph back over the engine's position. It now
+  // writes only within a moment of a real scroll gesture.
+  const gestured = useRef(0);
+  useEffect(() => {
+    const root = scroller.current;
+    if (!root) return;
+    const mark = () => {
+      gestured.current = Date.now();
+    };
+    for (const type of ["wheel", "touchmove", "pointerdown", "keydown"] as const) {
+      root.addEventListener(type, mark, { passive: true });
+    }
+    return () => {
+      for (const type of ["wheel", "touchmove", "pointerdown", "keydown"] as const) {
+        root.removeEventListener(type, mark);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     const root = scroller.current;
     if (!root || playing) return;
     const observer = new IntersectionObserver(
       (entries) => {
+        if (Date.now() - gestured.current > 1200) return;
         const top = entries
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -334,7 +352,13 @@ const TextStage = ({
               <BlockView
                 key={block.id}
                 block={block}
-                active={block.id === activeBlockId}
+                state={
+                  block.id === activeBlockId
+                    ? "active"
+                    : block.charStart + block.text.length <= cursor
+                      ? "read"
+                      : "ahead"
+                }
                 cursor={block.id === activeBlockId ? cursor - block.charStart : -1}
                 onJump={onJump}
               />
@@ -347,27 +371,54 @@ const TextStage = ({
 };
 
 /**
- * The word the reader is on, marked in place. Only the active paragraph
- * re-renders as the position moves — everything else is memoized on a stable
- * block identity, so a 900-paragraph book does not re-render per word.
+ * The reading trail.
+ *
+ * Three levels, because reading happens at three scales at once: everything
+ * already passed carries a faint wash, the sentence being read carries a
+ * stronger one, and the word under the engine is marked solid. The trail is
+ * what makes the pace legible — you can see how the rhythm slows at a full
+ * stop and quickens through short words, which a single moving mark hides.
  */
+const SENTENCE_END = /[.!?…]["'\u201d\u2019)\]]*\s+/g;
+
 const TrackedText = ({ text, cursor }: { text: string; cursor: number }) => {
-  const parts = useMemo(() => {
-    const out: { text: string; start: number }[] = [];
-    const re = /\S+\s*/g;
+  const { words, sentences } = useMemo(() => {
+    const found: { text: string; start: number }[] = [];
+    const wordRe = /\S+\s*/g;
     let match: RegExpExecArray | null;
-    while ((match = re.exec(text)) !== null) out.push({ text: match[0], start: match.index });
-    return out;
+    while ((match = wordRe.exec(text)) !== null) found.push({ text: match[0], start: match.index });
+
+    // Sentence boundaries, so the current clause can be washed as a unit.
+    const bounds: number[] = [0];
+    SENTENCE_END.lastIndex = 0;
+    while ((match = SENTENCE_END.exec(text)) !== null) bounds.push(match.index + match[0].length);
+    bounds.push(text.length);
+    return { words: found, sentences: bounds };
   }, [text]);
+
+  let sentenceStart = 0;
+  let sentenceEnd = text.length;
+  for (let i = 0; i < sentences.length - 1; i += 1) {
+    if (cursor >= sentences[i]! && cursor < sentences[i + 1]!) {
+      sentenceStart = sentences[i]!;
+      sentenceEnd = sentences[i + 1]!;
+      break;
+    }
+  }
 
   return (
     <>
-      {parts.map((part) => {
-        const end = part.start + part.text.length;
-        const now = cursor >= part.start && cursor < end;
+      {words.map((word) => {
+        const end = word.start + word.text.length;
+        const now = cursor >= word.start && cursor < end;
+        const read = !now && end <= cursor;
+        const inSentence = !now && word.start >= sentenceStart && word.start < sentenceEnd;
         return (
-          <span key={part.start} className={now ? "word is-now" : "word"}>
-            {part.text}
+          <span
+            key={word.start}
+            className={`word${now ? " is-now" : ""}${read ? " is-read" : ""}${inSentence ? " in-sentence" : ""}`}
+          >
+            {word.text}
           </span>
         );
       })}
@@ -378,18 +429,19 @@ const TrackedText = ({ text, cursor }: { text: string; cursor: number }) => {
 const BlockView = memo(
   ({
     block,
-    active,
+    state,
     cursor,
     onJump,
   }: {
     block: Block;
-    active: boolean;
+    state: "read" | "active" | "ahead";
     cursor: number;
     onJump: (block: Block) => void;
   }) => {
+    const active = state === "active";
     const props = {
       "data-block": block.id,
-      className: `block${active ? " is-active" : ""}`,
+      className: `block is-${state}`,
       onDoubleClick: () => onJump(block),
     };
 

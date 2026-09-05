@@ -6,6 +6,7 @@ import {
   Menu,
   Ring,
   Segmented,
+  Slider,
   Swatches,
   type IconName,
 } from "@ui/components";
@@ -68,6 +69,7 @@ export const Specimen = () => {
   const [seg, setSeg] = useState("b");
   const [menu, setMenu] = useState("serif");
   const [swatch, setSwatch] = useState<string>(ANCHOR_COLORS[0]);
+  const [pace, setPace] = useState(300);
 
   return (
     <main className="specimen" id="main">
@@ -198,7 +200,8 @@ export const Specimen = () => {
             />
           </Cell>
           <Cell label="swatches"><Swatches label="Anchor" value={swatch} onChange={setSwatch} /></Cell>
-          <Cell label="slider"><input className="slider" type="range" min={100} max={800} defaultValue={300} aria-label="Pace" /></Cell>
+          <Cell label="slider"><Slider label="Pace" min={100} max={800} step={10} value={pace} onChange={setPace} readout={`${pace} WPM`} /></Cell>
+          <Cell label="slider disabled"><Slider label="Disabled" min={0} max={100} value={40} onChange={() => undefined} disabled /></Cell>
           <Cell label="field"><input className="field" placeholder="https://" aria-label="Link" /></Cell>
           <Cell label="progress ring">
             <div className="spec-row">
