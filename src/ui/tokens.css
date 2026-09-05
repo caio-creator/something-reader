@@ -186,6 +186,12 @@
    */
   --radius-card: 32px;
   --pad-card: 20px;
+  /*
+   * Content sitting near the corner of a heavily rounded box needs more inset
+   * than the box's own padding, or it crowds the arc. A little over two-thirds
+   * of the radius clears it at every point text actually sits.
+   */
+  --pad-round: 24px;
   --radius-control: 999px;
   --radius-field: 26px;
   --radius-tile: 18px;
