@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
-import type { Block, SomethingDocument } from "@core/model/types";
-import { Button, FocusWord, Sheet, WheelPicker } from "@ui/components";
+import type { Block, Section, SomethingDocument } from "@core/model/types";
+import { Button, FocusWord, Icon, Sheet, WheelPicker } from "@ui/components";
 import { copy } from "@ui/copy";
 import { useSettings } from "../providers/settings-context";
-import { timecode } from "../format";
+import { estimateMs, timecode, timeLeft } from "../format";
 import { VERSION } from "../version";
+import { AppearanceControls } from "./AppearanceControls";
 
 const PACE_VALUES = Array.from({ length: 71 }, (_, i) => 100 + i * 10);
+
+type Mode = "focus" | "text";
+type Panel = "pace" | "look" | "contents" | null;
 
 /** A keydown target can be `document`, which has no `matches`. */
 export const isTyping = (event: KeyboardEvent): boolean => {
@@ -17,8 +21,6 @@ export const isTyping = (event: KeyboardEvent): boolean => {
     (target.isContentEditable || !!target.closest("input, textarea, select, [contenteditable]"))
   );
 };
-
-type Mode = "focus" | "text";
 
 export const Reader = ({
   doc,
@@ -33,7 +35,7 @@ export const Reader = ({
 }) => {
   const { settings, update } = useSettings();
   const [mode, setMode] = useState<Mode>("focus");
-  const [paceOpen, setPaceOpen] = useState(false);
+  const [panel, setPanel] = useState<Panel>(null);
   const [showHint, setShowHint] = useState(true);
 
   const toggle = useCallback(() => {
@@ -44,8 +46,9 @@ export const Reader = ({
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (isTyping(event)) return;
+      if (event.metaKey || event.ctrlKey) return;
       if (event.key === "Escape") {
-        if (paceOpen) return;
+        if (panel) return;
         onClose();
         return;
       }
@@ -56,12 +59,18 @@ export const Reader = ({
       if (event.key === "ArrowRight" || event.key === "j") engine.current?.step(1);
       if (event.key === "ArrowLeft" || event.key === "k") engine.current?.step(-1);
       if (event.key === "t") setMode((m) => (m === "focus" ? "text" : "focus"));
+      if (event.key === "c") setPanel((p) => (p === "contents" ? null : "contents"));
+      if (event.key === "a") setPanel((p) => (p === "look" ? null : "look"));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [engine, onClose, paceOpen, toggle]);
+  }, [engine, onClose, panel, toggle]);
 
   const word = snapshot?.chunk.length ? snapshot.chunk.map((t) => t.text).join(" ") : doc.title;
+  const activeSectionId = useMemo(() => {
+    const blockId = snapshot?.position.blockId;
+    return doc.sections.find((s) => s.blocks.some((b) => b.id === blockId))?.id;
+  }, [doc, snapshot?.position.blockId]);
 
   return (
     <section className="reader" id="main">
@@ -69,22 +78,16 @@ export const Reader = ({
         <Button variant="circle" icon="close" aria-label={copy.close} onClick={onClose} />
         <span className="reader-title mono">{doc.title}</span>
         <div className="reader-top-actions">
-          <Button
-            variant="circle"
-            icon="gauge"
-            aria-label={copy.pace}
-            onClick={() => setPaceOpen(true)}
-          />
+          {doc.sections.length > 1 && (
+            <Button variant="circle" icon="contents" aria-label={copy.contents} onClick={() => setPanel("contents")} />
+          )}
+          <Button variant="circle" icon="aa" aria-label={copy.look} onClick={() => setPanel("look")} />
+          <Button variant="circle" icon="gauge" aria-label={copy.pace} onClick={() => setPanel("pace")} />
         </div>
       </header>
 
       {mode === "focus" ? (
-        <FocusStage
-          word={word}
-          showHint={showHint}
-          onDismissHint={() => setShowHint(false)}
-          onToggle={toggle}
-        />
+        <FocusStage word={word} showHint={showHint} onDismissHint={() => setShowHint(false)} onToggle={toggle} />
       ) : (
         <TextStage
           doc={doc}
@@ -107,6 +110,7 @@ export const Reader = ({
               max={Math.max(0, snapshot.length - 1)}
               value={snapshot.index}
               aria-label="Position"
+              aria-valuetext={`${Math.round(snapshot.progress * 100)}%`}
               className="slider"
               onChange={(event) => engine.current?.seek(Number(event.target.value))}
             />
@@ -119,27 +123,23 @@ export const Reader = ({
             >
               {mode === "focus" ? copy.text : copy.focus}
             </Button>
-            <Button
-              variant="primary"
-              icon={snapshot.playing ? "pause" : "play"}
-              onClick={toggle}
-            >
+            <Button variant="primary" icon={snapshot.playing ? "pause" : "play"} onClick={toggle}>
               {snapshot.playing ? copy.pause : snapshot.finished ? copy.restart : copy.play}
             </Button>
           </div>
           <footer className="card-foot">
-            <span className="mono">{copy.mark}</span>
+            <span className="mono">{timeLeft(snapshot.remainingMs)}</span>
             <span className="mono">{VERSION}</span>
           </footer>
         </div>
       )}
 
-      {paceOpen && (
+      {panel === "pace" && (
         <Sheet
           title={copy.paceTitle}
-          onClose={() => setPaceOpen(false)}
+          onClose={() => setPanel(null)}
           footer={
-            <Button variant="primary" onClick={() => setPaceOpen(false)}>
+            <Button variant="primary" onClick={() => setPanel(null)}>
               {copy.save}
             </Button>
           }
@@ -151,11 +151,76 @@ export const Reader = ({
             format={(value) => `${value} WPM`}
             onChange={(wpm) => update({ wpm })}
           />
+          <p className="sheet-note mono">
+            {timeLeft(estimateMs(Math.max(0, doc.tokenCount - (snapshot?.index ?? 0)), settings.wpm))}
+          </p>
+        </Sheet>
+      )}
+
+      {panel === "look" && (
+        <Sheet title={copy.look} onClose={() => setPanel(null)}>
+          <div className="look-preview">
+            <FocusWord text="something" trailing="." size="preview" guides={settings.guides} />
+          </div>
+          <AppearanceControls />
+        </Sheet>
+      )}
+
+      {panel === "contents" && (
+        <Sheet title={copy.contents} onClose={() => setPanel(null)}>
+          <Contents
+            doc={doc}
+            activeSectionId={activeSectionId}
+            wpm={settings.wpm}
+            onPick={(section) => {
+              engine.current?.seekToChar(section.charStart);
+              setPanel(null);
+            }}
+          />
         </Sheet>
       )}
     </section>
   );
 };
+
+const Contents = ({
+  doc,
+  activeSectionId,
+  wpm,
+  onPick,
+}: {
+  doc: SomethingDocument;
+  activeSectionId?: string;
+  wpm: number;
+  onPick: (section: Section) => void;
+}) => (
+  <ol className="contents-list">
+    {doc.sections.map((section, index) => {
+      const tokens = section.blocks.reduce(
+        (sum, block) => sum + (block.text.match(/[^\s]+/g)?.length ?? 0),
+        0,
+      );
+      const active = section.id === activeSectionId;
+      return (
+        <li key={section.id}>
+          <button
+            type="button"
+            className={active ? "is-active" : ""}
+            aria-current={active ? "true" : undefined}
+            onClick={() => onPick(section)}
+          >
+            <span className="contents-index mono">{String(index + 1).padStart(2, "0")}</span>
+            <span className="contents-copy">
+              <span className="contents-title">{section.title}</span>
+              <span className="contents-meta mono">{timeLeft(estimateMs(tokens, wpm)).replace(" left", "")}</span>
+            </span>
+            {active && <Icon name="bolt" size={16} />}
+          </button>
+        </li>
+      );
+    })}
+  </ol>
+);
 
 const FocusStage = ({
   word,
@@ -173,6 +238,7 @@ const FocusStage = ({
     <div className="focus-stage">
       {showHint && (
         <div className="coach">
+          <Icon name="drop" size={20} />
           <div>
             <strong className="mono">{copy.tapTitle}</strong>
             <span className="mono">{copy.tapBody}</span>
@@ -210,8 +276,7 @@ const TextStage = ({
   onScrolledToRef.current = onScrolledTo;
 
   // Scrolling moves the shared position, so switching back to focus resumes
-  // where you actually stopped reading — the old build never updated the token
-  // index here, so the handoff silently did nothing.
+  // where you actually stopped reading.
   useEffect(() => {
     const root = scroller.current;
     if (!root) return;
@@ -271,7 +336,6 @@ const BlockView = ({
     "data-block": block.id,
     className: `block${active ? " is-active" : ""}`,
     onDoubleClick: onJump,
-    title: copy.focusHere,
   };
 
   if (block.kind === "heading") {
@@ -281,6 +345,22 @@ const BlockView = ({
   }
   if (block.kind === "quote") return <blockquote {...props}>{block.text}</blockquote>;
   if (block.kind === "code") return <pre {...props}>{block.text}</pre>;
-  if (block.kind === "list") return <p {...props}>{block.text}</p>;
-  return <p {...props}>{block.text}</p>;
+
+  // The reading position is marked the way the focus word is: the first letter
+  // in the anchor colour, between rules that run to the edges.
+  return (
+    <p {...props}>
+      {active ? (
+        <>
+          <span className="lead">{block.text.slice(0, 1)}</span>
+          {block.text.slice(1)}
+          <button type="button" className="jump mono" onClick={onJump}>
+            {copy.focusHere}
+          </button>
+        </>
+      ) : (
+        block.text
+      )}
+    </p>
+  );
 };

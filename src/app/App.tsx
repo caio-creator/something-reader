@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getDocument } from "@core/storage/idb";
 import type { SomethingDocument } from "@core/model/types";
-import { TabBar, type TabKey } from "@ui/components";
+import { TabBar, ToastProvider, useToast, type TabKey } from "@ui/components";
 import { copy } from "@ui/copy";
 import { SettingsProvider } from "./providers/SettingsProvider";
 import { useSettings } from "./providers/settings-context";
@@ -25,6 +25,7 @@ const readFlag = (): boolean => {
 
 const Shell = () => {
   const { settings, loaded } = useSettings();
+  const toast = useToast();
   const [onboarded, setOnboarded] = useState(readFlag);
   const [tab, setTab] = useState<TabKey>("now");
   const [doc, setDoc] = useState<SomethingDocument | null>(null);
@@ -119,7 +120,9 @@ const Shell = () => {
           items={library.items}
           wpm={settings.wpm}
           onOpen={(id) => void openById(id)}
-          onRemove={(id) => void library.remove(id)}
+          onRemove={(id, title) => {
+            void library.remove(id).then(() => toast(`${title} removed`, "trash"));
+          }}
         />
       )}
 
@@ -140,6 +143,8 @@ const Shell = () => {
 
 export const App = () => (
   <SettingsProvider>
-    <Shell />
+    <ToastProvider>
+      <Shell />
+    </ToastProvider>
   </SettingsProvider>
 );

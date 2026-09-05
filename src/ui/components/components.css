@@ -269,6 +269,12 @@
 .sheet-body {
   overflow: auto;
   min-height: 0;
+  /* A scrollbar drawn over a glass sheet reads as damage. */
+  scrollbar-width: none;
+}
+
+.sheet-body::-webkit-scrollbar {
+  display: none;
 }
 
 .sheet-footer {
@@ -429,4 +435,165 @@
     -webkit-backdrop-filter: none !important;
   }
   .sheet-scrim { backdrop-filter: none; }
+}
+
+/* ---------- anchored menu ---------- */
+
+.menu {
+  position: relative;
+}
+
+.menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--h);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  font-size: var(--step-label);
+  font-weight: 500;
+  transition: background-color var(--enter);
+}
+
+@media (hover: hover) {
+  .menu-trigger:hover {
+    background: var(--surface-3);
+  }
+}
+
+.menu-caret {
+  color: var(--text-3);
+  transition: transform var(--dur-control) var(--ease);
+}
+
+.menu-caret.is-open {
+  transform: rotate(180deg);
+}
+
+.menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-2));
+  max-height: min(300px, 50vh);
+  overflow-y: auto;
+  z-index: 50;
+  min-width: 220px;
+  padding: var(--space-1);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  border-top: 1px solid var(--glass-edge-top);
+  border-bottom: 1px solid var(--glass-edge-bottom);
+  border-left: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline);
+  box-shadow: var(--shadow);
+  transform-origin: top right;
+  animation: menu-in var(--dur-pop) var(--ease);
+  scrollbar-width: thin;
+}
+
+.menu-list.is-up {
+  top: auto;
+  bottom: calc(100% + var(--space-2));
+  transform-origin: bottom right;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .menu-list {
+    background: var(--glass-sheet);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+  }
+}
+
+@keyframes menu-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.menu-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--h);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-1);
+  border-radius: var(--radius-control);
+  text-align: left;
+  font-size: var(--step-label);
+  transition: background-color var(--enter);
+}
+
+@media (hover: hover) {
+  .menu-list button:hover {
+    background: var(--surface-2);
+  }
+}
+
+.menu-check {
+  width: 22px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  flex: none;
+}
+
+.menu-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.menu-copy small {
+  font-family: var(--font-mono);
+  font-size: var(--step-eyebrow);
+  color: var(--text-3);
+}
+
+.menu-list button.on .menu-copy > span {
+  font-weight: 600;
+}
+
+/* ---------- toasts ---------- */
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--tabbar-space) + var(--space-4));
+  transform: translateX(-50%);
+  z-index: 90;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  pointer-events: none;
+}
+
+@media (min-width: 700px) {
+  .toasts {
+    top: calc(var(--tabbar-space) + var(--space-2));
+    bottom: auto;
+  }
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: var(--step-label);
+  font-weight: 500;
+  box-shadow: var(--shadow);
+  animation: toast-in var(--dur-pop) var(--ease);
+}
+
+.toast svg {
+  color: var(--accent);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: none; }
 }

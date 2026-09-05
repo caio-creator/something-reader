@@ -54,6 +54,10 @@ export const copy = {
   restart: "Start over",
   save: "Save",
 
+  contents: "Contents",
+  look: "Look",
+  shortcuts: "Keyboard",
+
   // settings
   preview: "Preview",
   appearance: "Appearance",
@@ -81,6 +85,11 @@ export const copy = {
   fontMono: "Mono",
   fontDyslexic: "OpenDyslexic",
   words: "Words at a time",
+  presets: "Presets",
+  presetsBody: "Not sure where to start? These are tuned and ready.",
+  presetQuiet: "Quiet",
+  presetPaper: "Paper",
+  presetHighContrast: "Contrast",
   data: "Data",
   storageUsed: "Stored here",
   clearAll: "Delete everything",

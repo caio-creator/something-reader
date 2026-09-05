@@ -13,7 +13,7 @@ export const Things = ({
   items: LibraryItem[];
   wpm: number;
   onOpen: (id: string) => void;
-  onRemove: (id: string) => void;
+  onRemove: (id: string, title: string) => void;
 }) => {
   const [query, setQuery] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<LibraryItem | null>(null);
@@ -97,7 +97,7 @@ export const Things = ({
                 variant="primary"
                 className="is-danger"
                 onClick={() => {
-                  onRemove(pendingRemoval.id);
+                  onRemove(pendingRemoval.id, pendingRemoval.title);
                   setPendingRemoval(null);
                 }}
               >
