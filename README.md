@@ -2,7 +2,9 @@
 
 **Read something.**
 
-Something is a local-first reader for books, PDFs, EPUBs, Markdown, and anything you paste. Drop it in. Read it. Close it. Open it. Continue.
+Something is a local-first reader for books, PDFs, EPUBs, DOCX, Markdown, web
+links, and anything you paste. Drop it in. Read it. Close it. Open it again.
+Continue.
 
 No account. No cloud. No paywall on the files you already have.
 
@@ -12,58 +14,84 @@ Got something? Drop it here.
 
 ## What it is
 
-A desktop-first, open-source reading app. Traditional reading is first-class. RSVP (word-by-word) is a mode, not the product. Progress survives a restart.
+A desktop-and-mobile, open-source reading app. It opens in **Focus** — one word
+at a time on its optimal recognition position — and the full text is always one
+tap away. Progress survives a restart, and survives re-importing the same file.
 
-It is not Kindle, not Readwise, not a speed-reading gimmick, and not an AI assistant.
+It is not Kindle, not Readwise, not a speed-reading gimmick, and not an AI
+assistant.
 
-## Run it
+**On speed:** Focus mode will not make you read three times faster. Silent
+reading sits around 200–300 WPM, regressions aid comprehension, and RSVP blocks
+them. What it does is keep you moving through a backlog you would otherwise not
+open. See `docs/research/speed-reading-research.md` for the citations.
+
+## Magic moment
+
+1. Open the app.
+2. Import something.
+3. Read it — focus mode or the full text.
+4. Change the pace if you want.
+5. Close the tab.
+6. Open it again. You are where you left off.
+
+## Formats
+
+| In | How |
+|---|---|
+| EPUB | JSZip + the real table of contents |
+| PDF | pdf.js text layer, paragraphs rebuilt from line geometry |
+| DOCX | mammoth |
+| Markdown | markdown-it |
+| HTML, TXT | built in |
+| Web link | Readability, fetched by your own dev server |
+| Pasted text | built in |
+
+Scanned PDFs have no text layer and fail with an honest message rather than a
+blank document. Web links go through a local endpoint, so no third-party reader
+service ever sees what you read; that one path needs `bun run dev` running.
+
+## Install
 
 ```bash
 bun install
 bun run dev
 ```
 
-Then open the URL Vite prints. Import an EPUB, PDF, Markdown file, or paste text.
+Then open http://localhost:5173.
 
 ```bash
-bun test
-bun run build
+bun test        # unit tests
+bun run build   # typecheck + production build
 ```
-
-Node 22+ works if you prefer `npm install && npm run dev`.
-
-## Magic moment
-
-1. Open the app.
-2. Import something.
-3. Read it (page or focus mode).
-4. Change speed if you are in focus mode.
-5. Close the tab.
-6. Open it again. You are where you left off.
 
 ## Architecture
 
 Core logic lives in `src/core` and does not import React.
 
-- `src/core/model` — document model
-- `src/core/importers` — EPUB, PDF, text, Markdown
-- `src/core/engine` — position, RSVP timing, ORP
-- `src/core/storage` — IndexedDB + OPFS
-- `src/app` — UI
-- `src/ui` — tokens, copy, components
+| Path | What |
+|---|---|
+| `src/core/model` | the document model: sections, blocks, stable ids, offsets |
+| `src/core/importers` | one importer per format, run in a Web Worker |
+| `src/core/engine` | tokenizing, timing, ORP, play/pause/seek — framework-free |
+| `src/core/storage` | a `Storage` seam over IndexedDB, with the original bytes |
+| `src/ui` | tokens, copy, components |
+| `src/app` | screens, providers, hooks |
 
-See [docs/architecture/system-overview.md](docs/architecture/system-overview.md).
+Decisions are recorded in `docs/adr`. Research is in `docs/research`.
 
 ## Brand
 
-- **Something** — the brand
-- **Something Reader** — GitHub, packages, stores, SEO
-- **something.** — the wordmark
+**Something** — the brand · **Something Reader** — GitHub, packages, stores, SEO
+· `something.` — the wordmark.
 
-Campaign line, not the product name: *Read this shit.*
+A campaign line, not the product name: *Read this shit.*
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
+Apache 2.0.
 
-Reference screenshots of other products, if present locally, live in `references/` and are gitignored. Do not commit them.
+---
+
+`references/` holds material from other products, for study only. It is
+gitignored and must stay that way.
