@@ -24,6 +24,13 @@ Core code is in `src/core` and must stay UI-free — no React imports below
 - **Block ids are deterministic** and positions reconcile through a content
   fingerprint plus a char offset (ADR-011). If you change how blocks are built,
   run `tests/model.test.ts` — that is what protects resume.
+- **The voice is a 409 MB download, and nothing else in the app is.** It lives
+  in Cache Storage under `something-voice-*`, which `public/sw.js` deliberately
+  refuses to sweep on activate — otherwise every app update would charge the
+  reader for it again. `pack.ts` describes the pack and imports no ONNX, so the
+  main bundle stays free of the inference engine; if you find yourself importing
+  `assets.ts` outside the worker, that is the mistake. To test the download path
+  from scratch: Application → Storage → delete `something-voice-v1`.
 - **Fixtures** in `fixtures/` include a real EPUB, PDF and DOCX. Regenerate them
   only if you also update `tests/formats.test.ts`.
 - **`references/` is gitignored and stays that way.** It holds other products'

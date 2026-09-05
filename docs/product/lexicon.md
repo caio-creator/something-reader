@@ -16,6 +16,10 @@ Tone: short, dry, slightly sharp. No “unlock your potential.”
 | Library | Things |
 | Traditional mode | Read |
 | RSVP | Focus |
+| Narration | Listen |
+| Narrating | reading… |
+| The engine | Something Voice |
+| Voice download | Natural voices work offline. One download. |
 | Continue | You have something to finish. |
 | Campaign only | Read this shit. |
 

@@ -45,4 +45,6 @@ Commodity: import EPUB, dark mode, font size, a library list. Gimmicks: miracle 
 
 ## Differentiation
 
-Something is not the best research manager, not the best TTS, not the best store. It is the shortest path from **a file on disk** to **a reading session that still exists tomorrow**, on a computer, with an optional focus mode that does not lie about comprehension.
+Something is not the best research manager and not the best store. It is the shortest path from **a file on disk** to **a reading session that still exists tomorrow**, on a computer, with an optional focus mode that does not lie about comprehension.
+
+It used to say "not the best TTS" here too, and that has changed — but not into "the best TTS". Speechify's job is to turn a document into audio you take somewhere else. Something's is to read a document to you *while you read it*: the voice and the reading trail are the same position, so Listen is not a second product bolted on, it is the third way to move through the one you already have. What that buys is narrow and worth naming — it does not compete on voice count, cloud voices, or podcast export, and it will not, because all three require sending what you are reading to someone.
