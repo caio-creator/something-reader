@@ -47,5 +47,5 @@ export type ReaderSettings = {
 export const defaultSettings = (): ReaderSettings => ({
   wpm: 240,
   fontSize: "m",
-  theme: "ink",
+  theme: "paper",
 });

@@ -59,6 +59,8 @@ export const App = () => {
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;
     document.documentElement.style.setProperty("--size", fontSizePx[settings.fontSize]);
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) themeMeta.setAttribute("content", settings.theme === "ink" ? "#000000" : "#F2F2F7");
     void saveSettings(settings);
   }, [settings]);
 
@@ -194,7 +196,7 @@ export const App = () => {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div>
+        <div className="brand">
           <div className="mark">
             something<span>.</span>
           </div>
@@ -221,10 +223,10 @@ export const App = () => {
             <button className="primary" type="button" onClick={() => fileRef.current?.click()}>
               {copy.openFile}
             </button>
-            <button type="button" onClick={() => setPasteOpen((v) => !v)}>
+            <button className="plain" type="button" onClick={() => setPasteOpen((v) => !v)}>
               {copy.paste}
             </button>
-            <button type="button" onClick={() => void loadSample()}>
+            <button className="plain" type="button" onClick={() => void loadSample()}>
               {copy.sample}
             </button>
           </div>
@@ -256,9 +258,11 @@ export const App = () => {
         </div>
 
         <div>
-          <div className="section-label">{copy.things}</div>
+          <div className="things-head">
+            <h2>{copy.things}</h2>
+          </div>
           {items.length === 0 ? (
-            <p className="hint" style={{ marginTop: "0.6rem" }}>
+            <p className="hint" style={{ margin: "0 12px" }}>
               {copy.emptyTitle} {copy.emptyBody}
             </p>
           ) : (
@@ -291,12 +295,24 @@ export const App = () => {
             <header className="topbar">
               <h1>{doc.title}</h1>
               <div className="controls">
-                <button type="button" className={mode === "read" ? "primary" : ""} onClick={() => setMode("read")}>
-                  {copy.read}
-                </button>
-                <button type="button" className={mode === "focus" ? "primary" : ""} onClick={() => setMode("focus")}>
-                  {copy.focus}
-                </button>
+                <div className="segmented" role="tablist" aria-label="Reading mode">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === "read"}
+                    onClick={() => setMode("read")}
+                  >
+                    {copy.read}
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={mode === "focus"}
+                    onClick={() => setMode("focus")}
+                  >
+                    {copy.focus}
+                  </button>
+                </div>
                 <label className="status">
                   {copy.wpm}{" "}
                   <input
@@ -305,6 +321,7 @@ export const App = () => {
                     max={500}
                     step={10}
                     value={settings.wpm}
+                    aria-label="Words per minute"
                     onChange={(e) => {
                       const wpm = Number(e.target.value);
                       setSettings((s) => ({ ...s, wpm }));
@@ -313,11 +330,17 @@ export const App = () => {
                   />{" "}
                   {settings.wpm}
                 </label>
-                <button type="button" onClick={() => setSettings((s) => ({ ...s, theme: s.theme === "ink" ? "paper" : "ink" }))}>
+                <button
+                  type="button"
+                  className="plain"
+                  onClick={() => setSettings((s) => ({ ...s, theme: s.theme === "ink" ? "paper" : "ink" }))}
+                >
                   {settings.theme === "ink" ? copy.themePaper : copy.themeInk}
                 </button>
                 <button
                   type="button"
+                  className="plain"
+                  aria-label="Text size"
                   onClick={() =>
                     setSettings((s) => ({
                       ...s,
@@ -364,10 +387,12 @@ export const App = () => {
             )}
             {mode === "focus" && snap && (
               <div className="dock">
-                <span className="status">{progressLabel}</span>
-                <button className="primary" type="button" onClick={() => engineRef.current?.toggle()}>
-                  {snap.playing ? copy.pause : copy.play}
-                </button>
+                <div className="dock-inner">
+                  <span className="status">{progressLabel}</span>
+                  <button className="primary" type="button" onClick={() => engineRef.current?.toggle()}>
+                    {snap.playing ? copy.pause : copy.play}
+                  </button>
+                </div>
               </div>
             )}
           </>
