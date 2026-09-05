@@ -161,9 +161,9 @@
 .field {
   width: 100%;
   min-height: var(--tap);
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-field);
   background: var(--surface-2);
   color: var(--text);
 }
@@ -177,6 +177,7 @@
 }
 
 .field-area {
+  border-radius: var(--radius-field);
   min-height: 180px;
   resize: vertical;
   font-family: var(--font-read);
@@ -731,7 +732,7 @@
 
 .prose pre {
   padding: var(--space-4);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-field);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 0.85em;
@@ -749,7 +750,7 @@
   z-index: 3;
   width: min(92vw, 460px);
   padding: var(--space-4);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-sheet);
   background: var(--surface);
   box-shadow: var(--shadow);
   border-top: 1px solid var(--glass-edge-top);
@@ -983,7 +984,7 @@
 .look-preview {
   margin-bottom: var(--space-5);
   padding: var(--space-4) var(--space-3);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-field);
   background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--hairline);
 }
@@ -1059,48 +1060,61 @@
 }
 
 /*
- * The reading trail, drawn like a highlighter rather than a fill.
+ * The reading trail, drawn like a highlighter — and the ink stays.
  *
- * Three states, and they read as one gesture: text not yet reached is dimmer
- * because it has not been read, text already passed sits just under full
- * strength, and the word being read carries the mark. The mark itself is a
- * band that stops short of the line box with soft ends and uneven corners —
- * the shape a marker actually leaves, not a rectangle.
+ * A marker does not un-mark what it has passed. Words already read keep their
+ * band at lower strength, so the stripe grows continuously through the
+ * paragraph and you can see exactly how far the pass has got. Words not yet
+ * reached carry no ink and sit dimmer, because they have not been read.
+ *
+ * Read words use a small radius so consecutive bands butt into one continuous
+ * stroke instead of a row of scalloped pills; only the word under the engine
+ * gets the uneven marker ends.
  */
 .word {
-  transition: opacity var(--dur-control) var(--ease), color var(--dur-press) ease-out;
+  transition:
+    opacity var(--dur-control) var(--ease),
+    background-color var(--dur-control) var(--ease),
+    color var(--dur-press) ease-out;
 }
 
 .prose .block.is-active .word {
-  opacity: 0.52;
+  opacity: 0.5;
 }
 
 .prose .block.is-active .word.is-read {
-  opacity: 0.82;
+  opacity: 1;
+  background:
+    linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--anchor) 26%, transparent) 0,
+      color-mix(in srgb, var(--anchor) 32%, transparent) 100%
+    )
+    0 58% / 100% 82% no-repeat;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
-.prose .block.is-active .word.in-sentence {
-  opacity: 0.72;
+/* The first word of the pass gets the marker's rounded entry. */
+.prose .block.is-active .word.is-read:first-of-type {
+  border-radius: 8px 2px 7px 2px;
 }
 
 .word.is-now {
   opacity: 1;
   color: var(--accent-ink);
-  /* Ink pooling at the ends, thinner through the middle, and a band that does
-     not fill the line box. */
+  /* Ink pooling at the ends, and a band that does not fill the line box. */
   background:
     linear-gradient(
       100deg,
-      transparent 0,
-      color-mix(in srgb, var(--anchor) 88%, transparent) 3%,
-      var(--anchor) 14%,
-      var(--anchor) 86%,
-      color-mix(in srgb, var(--anchor) 88%, transparent) 97%,
-      transparent 100%
+      var(--anchor) 0,
+      var(--anchor) 88%,
+      color-mix(in srgb, var(--anchor) 82%, transparent) 97%,
+      color-mix(in srgb, var(--anchor) 40%, transparent) 100%
     )
     0 58% / 100% 82% no-repeat;
-  border-radius: 3px 9px 4px 8px;
-  padding: 0 1px;
+  border-radius: 2px 9px 3px 8px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
@@ -1109,13 +1123,17 @@
   color: var(--surface);
 }
 
-/* Paragraphs already passed keep a whisper of the trail. */
+/* Paragraphs the pass has finished keep a settled trace of the ink. */
 .prose .block.is-read {
-  color: color-mix(in srgb, var(--text-read) 70%, transparent);
+  color: var(--text-read);
+  background: color-mix(in srgb, var(--anchor) 9%, transparent);
+  border-radius: 6px;
+  box-shadow: -8px 0 0 color-mix(in srgb, var(--anchor) 9%, transparent),
+    8px 0 0 color-mix(in srgb, var(--anchor) 9%, transparent);
 }
 
 .prose .block.is-ahead {
-  color: color-mix(in srgb, var(--text-read) 88%, transparent);
+  color: color-mix(in srgb, var(--text-read) 82%, transparent);
 }
 
 /*
@@ -1361,9 +1379,9 @@
 .add-button {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: var(--radius-pill);
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
   background: var(--surface-2);
   border: 1px solid var(--hairline);
   color: var(--text);

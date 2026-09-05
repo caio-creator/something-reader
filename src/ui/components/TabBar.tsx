@@ -2,10 +2,10 @@ import { Icon, type IconName } from "./Icon";
 
 export type TabKey = "things" | "now" | "settings";
 
-const TABS: { key: TabKey; icon: IconName; label: string }[] = [
-  { key: "things", icon: "things", label: "Things" },
-  { key: "now", icon: "bolt", label: "Read now" },
-  { key: "settings", icon: "settings", label: "Settings" },
+const TABS: { key: TabKey; icon: IconName; active: IconName; label: string }[] = [
+  { key: "things", icon: "things", active: "things-solid", label: "Things" },
+  { key: "now", icon: "bolt", active: "bolt-solid", label: "Read now" },
+  { key: "settings", icon: "settings", active: "settings-solid", label: "Settings" },
 ];
 
 /**
@@ -28,7 +28,7 @@ export const TabBar = ({
         className={active === tab.key ? "on" : ""}
         onClick={() => onChange(tab.key)}
       >
-        <Icon name={tab.icon} size={19} />
+        <Icon name={active === tab.key ? tab.active : tab.icon} size={24} strokeWidth={1.9} />
         <span>{tab.label}</span>
       </button>
     ))}

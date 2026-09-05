@@ -16,10 +16,13 @@ export type IconName =
   | "forward" | "check" | "weight" | "palette" | "guides" | "shield"
   | "contrast" | "anchor" | "textsize" | "font" | "chunk" | "presets"
   | "contents" | "keyboard" | "chevron" | "database" | "info" | "external"
-  | "drop" | "clock" | "reset";
+  | "drop" | "clock" | "reset"
+  // Solid counterparts. Navigation reads as selected when its icon fills in —
+  // a colour change alone is a weak signal at 24px.
+  | "things-solid" | "bolt-solid" | "settings-solid";
 
 type Stroke = { d: string };
-type Filled = { d: string; fill: true };
+type Filled = { d: string; fill: true; evenOdd?: boolean };
 type Glyph = { text: string; x: number; y: number; size: number; serif?: boolean; weight?: number };
 type Part = Stroke | Filled | Glyph;
 
@@ -140,6 +143,20 @@ const ICONS: Record<IconName, Part[]> = {
     { d: "M4.4 11.6a7.6 7.6 0 1 1 2 5.9" },
     { d: "M3.4 17.8l2.9-.8.8 2.9" },
   ],
+
+  "things-solid": [
+    { d: "M6.3 9.1a1.5 1.5 0 0 1 1.5-1.5h1.9a1.5 1.5 0 0 1 1.5 1.5v10.2H6.3z", fill: true },
+    { d: "M12.7 5.5A1.5 1.5 0 0 1 14.2 4h1.9a1.5 1.5 0 0 1 1.5 1.5v13.8h-4.9z", fill: true },
+    { d: "M4 19.3h16a1.05 1.05 0 0 1 0 2.1H4a1.05 1.05 0 0 1 0-2.1z", fill: true },
+  ],
+  "bolt-solid": [{ d: "M13.9 2.6 5.2 13.4a.7.7 0 0 0 .54 1.14h4.32l-.72 6.86a.7.7 0 0 0 1.24.52l8.7-10.8a.7.7 0 0 0-.54-1.14h-4.32l.72-6.86a.7.7 0 0 0-1.24-.52z", fill: true }],
+  "settings-solid": [
+    {
+      d: "M10.6 3.75a1.45 1.45 0 0 1 1.44-1.25h0a1.45 1.45 0 0 1 1.44 1.25l.17 1.14c.55.16 1.07.38 1.55.65l.93-.68a1.45 1.45 0 0 1 1.88.15l.62.62a1.45 1.45 0 0 1 .15 1.88l-.68.93c.27.48.49 1 .65 1.55l1.14.17A1.45 1.45 0 0 1 21.14 11.6v.8a1.45 1.45 0 0 1-1.25 1.44l-1.14.17c-.16.55-.38 1.07-.65 1.55l.68.93a1.45 1.45 0 0 1-.15 1.88l-.62.62a1.45 1.45 0 0 1-1.88.15l-.93-.68c-.48.27-1 .49-1.55.65l-.17 1.14a1.45 1.45 0 0 1-1.44 1.25h-.8a1.45 1.45 0 0 1-1.44-1.25l-.17-1.14a7.85 7.85 0 0 1-1.55-.65l-.93.68a1.45 1.45 0 0 1-1.88-.15l-.62-.62a1.45 1.45 0 0 1-.15-1.88l.68-.93a7.85 7.85 0 0 1-.65-1.55l-1.14-.17A1.45 1.45 0 0 1 2.36 12.4v-.8a1.45 1.45 0 0 1 1.25-1.44l1.14-.17c.16-.55.38-1.07.65-1.55l-.68-.93a1.45 1.45 0 0 1 .15-1.88l.62-.62a1.45 1.45 0 0 1 1.88-.15l.93.68c.48-.27 1-.49 1.55-.65zM12 15.4a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8z",
+      fill: true,
+      evenOdd: true,
+    },
+  ],
 };
 
 // A couple of glyphs are solid shapes that would look thin if stroked.
@@ -148,10 +165,13 @@ const SOLID = new Set<IconName>(["play"]);
 export const Icon = ({
   name,
   size = 20,
+  strokeWidth = 1.75,
   className,
 }: {
   name: IconName;
   size?: number;
+  /** Heavier where an icon has to hold its own, as in navigation. */
+  strokeWidth?: number;
   className?: string;
 }) => (
   <svg
@@ -185,8 +205,9 @@ export const Icon = ({
           key={index}
           d={part.d}
           fill={"fill" in part || SOLID.has(name) ? "currentColor" : "none"}
+          fillRule={"evenOdd" in part && part.evenOdd ? "evenodd" : undefined}
           stroke={"fill" in part || SOLID.has(name) ? "none" : "currentColor"}
-          strokeWidth={1.6}
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
         />

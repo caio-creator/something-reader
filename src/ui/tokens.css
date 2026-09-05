@@ -179,11 +179,17 @@
    * between them, so a control inside a card curves with it rather than
    * against it.
    */
-  --radius-card: 26px;
-  --pad-card: 18px;
-  --radius-control: 16px;
-  --radius-tile: 13px;
-  --radius-sheet: 34px;
+  /*
+   * `corner-shape: squircle` gives a true continuous curve but only lands in
+   * the newest browsers, so the radius has to carry the roundness on its own
+   * everywhere else. These are deliberately generous for that reason.
+   */
+  --radius-card: 32px;
+  --pad-card: 20px;
+  --radius-control: 999px;
+  --radius-field: 26px;
+  --radius-tile: 18px;
+  --radius-sheet: 44px;
   --radius-pill: 999px;
 
   --h-sm: 32px;

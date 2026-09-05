@@ -99,30 +99,12 @@ a {
 }
 
 /*
- * Where the browser can draw a squircle, it should: a rounded rect this
- * generous shows its four arc joins, and a continuous curve does not.
+ * No `corner-shape: squircle` here, deliberately. It ships in current Chrome,
+ * and at a large radius its superellipse reaches further along the edge while
+ * bulging less than a circular arc — so the corner reads *squarer*, not
+ * rounder. A plain circular radius is genuinely round in every browser, which
+ * is what this app wants.
  */
-@supports (corner-shape: squircle) {
-  .btn-row,
-  .btn-primary,
-  .btn-circle,
-  .import-card,
-  .group,
-  .thing,
-  .sheet,
-  .menu-list,
-  .dock,
-  .tabbar,
-  .preview-card,
-  .empty-state,
-  .spec-cell,
-  .onboarding-card,
-  .row-icon,
-  .empty-icon,
-  .add-button {
-    corner-shape: squircle;
-  }
-}
 
 /* The mono voice: eyebrows, timecodes, counts, version stamps. */
 .mono {
