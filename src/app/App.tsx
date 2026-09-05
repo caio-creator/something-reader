@@ -11,6 +11,7 @@ import { Onboarding } from "./screens/Onboarding";
 import { ReadNow } from "./screens/ReadNow";
 import { isTyping, Reader } from "./screens/Reader";
 import { SettingsScreen } from "./screens/SettingsScreen";
+import { Specimen } from "./screens/Specimen";
 import { Things } from "./screens/Things";
 
 const SEEN_ONBOARDING = "something.seen-onboarding";
@@ -23,9 +24,20 @@ const readFlag = (): boolean => {
   }
 };
 
+const useHashRoute = () => {
+  const [hash, setHash] = useState(() => window.location.hash);
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return hash;
+};
+
 const Shell = () => {
   const { settings, loaded } = useSettings();
   const toast = useToast();
+  const hash = useHashRoute();
   const [onboarded, setOnboarded] = useState(readFlag);
   const [tab, setTab] = useState<TabKey>("now");
   const [doc, setDoc] = useState<SomethingDocument | null>(null);
@@ -66,6 +78,9 @@ const Shell = () => {
   }, [doc, onboarded]);
 
   if (!loaded) return <div className="boot" />;
+
+  // The design system's own page. No router: one hash, zero dependencies.
+  if (hash === "#specimen") return <Specimen />;
 
   if (!onboarded) {
     return (

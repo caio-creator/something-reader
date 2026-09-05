@@ -64,3 +64,25 @@ honoured.
   the focus word scales to `clamp(56px, 5.6vw, 92px)`.
 
 No sidebar at any width.
+
+
+## Icons
+
+One hairline set on a 24 grid at 1.6 stroke, round caps and joins, with ~2px of
+optical padding. Two rules:
+
+- **Letterforms are set, never drawn.** A hand-plotted "A" reads as a mistake
+  beside real type, so glyph icons render `<text>` in the app's own faces —
+  Inter for weight and size, Literata for the typeface picker.
+- **One job, one icon.** Three separate letter icons for text size, text weight
+  and reader appearance were the same drawing three times. There is now one of
+  each.
+
+Solid fills are reserved for shapes that would look thin stroked: the play
+triangle, list bullets, the half of the contrast circle, the word held between
+the guide rails.
+
+## Reviewing it
+
+`#specimen` renders the whole system on one page. Nothing joins the set without
+appearing there.

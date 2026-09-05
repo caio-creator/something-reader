@@ -79,7 +79,7 @@ export const SettingsScreen = () => {
         <Row icon="contrast" label={copy.background}>
           <Segmented label={copy.background} value={settings.theme} options={THEMES} onChange={(theme) => update({ theme })} />
         </Row>
-        <Row icon="type" label={copy.emphasis}>
+        <Row icon="weight" label={copy.emphasis}>
           <Segmented label={copy.emphasis} value={settings.emphasis} options={EMPHASES} onChange={(emphasis) => update({ emphasis })} />
         </Row>
         <Row icon="anchor" label={copy.anchor}>

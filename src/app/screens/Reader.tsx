@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
 import type { Block, Section, SomethingDocument } from "@core/model/types";
 import { Button, FocusWord, Icon, Sheet, WheelPicker } from "@ui/components";
@@ -81,7 +81,7 @@ export const Reader = ({
           {doc.sections.length > 1 && (
             <Button variant="circle" icon="contents" aria-label={copy.contents} onClick={() => setPanel("contents")} />
           )}
-          <Button variant="circle" icon="aa" aria-label={copy.look} onClick={() => setPanel("look")} />
+          <Button variant="circle" icon="textsize" aria-label={copy.look} onClick={() => setPanel("look")} />
           <Button variant="circle" icon="gauge" aria-label={copy.pace} onClick={() => setPanel("pace")} />
         </div>
       </header>
@@ -92,6 +92,8 @@ export const Reader = ({
         <TextStage
           doc={doc}
           activeBlockId={snapshot?.position.blockId}
+          cursor={snapshot?.position.charOffset ?? 0}
+          playing={snapshot?.playing ?? false}
           onJump={(block) => {
             engine.current?.seekToChar(block.charStart);
             setMode("focus");
@@ -258,11 +260,15 @@ const FocusStage = ({
 const TextStage = ({
   doc,
   activeBlockId,
+  cursor,
+  playing,
   onJump,
   onScrolledTo,
 }: {
   doc: SomethingDocument;
   activeBlockId?: string;
+  cursor: number;
+  playing: boolean;
   onJump: (block: Block) => void;
   onScrolledTo: (block: Block) => void;
 }) => {
@@ -275,11 +281,12 @@ const TextStage = ({
   const onScrolledToRef = useRef(onScrolledTo);
   onScrolledToRef.current = onScrolledTo;
 
-  // Scrolling moves the shared position, so switching back to focus resumes
-  // where you actually stopped reading.
+  // Scrolling moves the shared position — but only when the reader is doing the
+  // scrolling. While playing, the page follows the highlight instead, and a
+  // scroll listener would fight the engine for the same value.
   useEffect(() => {
     const root = scroller.current;
-    if (!root) return;
+    if (!root || playing) return;
     const observer = new IntersectionObserver(
       (entries) => {
         const top = entries
@@ -293,7 +300,22 @@ const TextStage = ({
     );
     root.querySelectorAll("[data-block]").forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, [blocks]);
+  }, [blocks, playing]);
+
+  // Keep the highlighted word on screen while it advances.
+  useEffect(() => {
+    if (!playing) return;
+    const root = scroller.current;
+    const mark = root?.querySelector<HTMLElement>(".word.is-now");
+    if (!root || !mark) return;
+    const box = mark.getBoundingClientRect();
+    const frame = root.getBoundingClientRect();
+    const comfortableTop = frame.top + frame.height * 0.3;
+    const comfortableBottom = frame.top + frame.height * 0.6;
+    if (box.top < frame.top + 60 || box.bottom > comfortableBottom) {
+      root.scrollBy({ top: box.top - comfortableTop, behavior: "smooth" });
+    }
+  }, [cursor, playing]);
 
   useEffect(() => {
     if (!activeBlockId || restored.current === doc.id) return;
@@ -313,7 +335,8 @@ const TextStage = ({
                 key={block.id}
                 block={block}
                 active={block.id === activeBlockId}
-                onJump={() => onJump(block)}
+                cursor={block.id === activeBlockId ? cursor - block.charStart : -1}
+                onJump={onJump}
               />
             ))}
           </section>
@@ -323,44 +346,76 @@ const TextStage = ({
   );
 };
 
-const BlockView = ({
-  block,
-  active,
-  onJump,
-}: {
-  block: Block;
-  active: boolean;
-  onJump: () => void;
-}) => {
-  const props = {
-    "data-block": block.id,
-    className: `block${active ? " is-active" : ""}`,
-    onDoubleClick: onJump,
-  };
+/**
+ * The word the reader is on, marked in place. Only the active paragraph
+ * re-renders as the position moves — everything else is memoized on a stable
+ * block identity, so a 900-paragraph book does not re-render per word.
+ */
+const TrackedText = ({ text, cursor }: { text: string; cursor: number }) => {
+  const parts = useMemo(() => {
+    const out: { text: string; start: number }[] = [];
+    const re = /\S+\s*/g;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(text)) !== null) out.push({ text: match[0], start: match.index });
+    return out;
+  }, [text]);
 
-  if (block.kind === "heading") {
-    const level = Math.min(3, Math.max(2, block.level ?? 2));
-    const Tag = `h${level}` as "h2" | "h3";
-    return <Tag {...props}>{block.text}</Tag>;
-  }
-  if (block.kind === "quote") return <blockquote {...props}>{block.text}</blockquote>;
-  if (block.kind === "code") return <pre {...props}>{block.text}</pre>;
-
-  // The reading position is marked the way the focus word is: the first letter
-  // in the anchor colour, between rules that run to the edges.
   return (
-    <p {...props}>
-      {active ? (
-        <>
-          <span className="lead">{block.text.slice(0, 1)}</span>
-          {block.text.slice(1)}
-          <button type="button" className="jump mono" onClick={onJump}>
-            {copy.focusHere}
-          </button>
-        </>
-      ) : (
-        block.text
-      )}
-    </p>
+    <>
+      {parts.map((part) => {
+        const end = part.start + part.text.length;
+        const now = cursor >= part.start && cursor < end;
+        return (
+          <span key={part.start} className={now ? "word is-now" : "word"}>
+            {part.text}
+          </span>
+        );
+      })}
+    </>
   );
 };
+
+const BlockView = memo(
+  ({
+    block,
+    active,
+    cursor,
+    onJump,
+  }: {
+    block: Block;
+    active: boolean;
+    cursor: number;
+    onJump: (block: Block) => void;
+  }) => {
+    const props = {
+      "data-block": block.id,
+      className: `block${active ? " is-active" : ""}`,
+      onDoubleClick: () => onJump(block),
+    };
+
+    if (block.kind === "heading") {
+      const level = Math.min(3, Math.max(2, block.level ?? 2));
+      const Tag = `h${level}` as "h2" | "h3";
+      return <Tag {...props}>{block.text}</Tag>;
+    }
+    if (block.kind === "quote") return <blockquote {...props}>{block.text}</blockquote>;
+    if (block.kind === "code") return <pre {...props}>{block.text}</pre>;
+
+    return (
+      <p {...props}>
+        {active ? (
+          <>
+            <TrackedText text={block.text} cursor={cursor} />
+            <button type="button" className="jump mono" onClick={() => onJump(block)}>
+              {copy.focusHere}
+            </button>
+          </>
+        ) : (
+          block.text
+        )}
+      </p>
+    );
+  },
+);
+
+BlockView.displayName = "BlockView";
