@@ -95,6 +95,14 @@ export type ReaderSettings = {
   emphasis: TextEmphasis;
   /** Reading measure in `ch`. */
   measure: number;
+  /** A `VoiceOption.id`, or null for whatever the platform picks. */
+  voice: string | null;
+  /**
+   * The narrator's pace, 1 being the voice's own. Deliberately not derived
+   * from `wpm`: prosody does not survive being driven at 400 words a minute,
+   * it just becomes a podcast at 2x.
+   */
+  voiceRate: number;
 };
 
 export const defaultSettings = (): ReaderSettings => ({
@@ -107,4 +115,6 @@ export const defaultSettings = (): ReaderSettings => ({
   guides: "normal",
   emphasis: "normal",
   measure: 66,
+  voice: null,
+  voiceRate: 1,
 });

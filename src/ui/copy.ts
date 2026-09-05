@@ -68,6 +68,16 @@ export const copy = {
   restart: "Start over",
   save: "Save",
 
+  // voice
+  listen: "Listen",
+  listenOff: "Stop listening",
+  listenNone: "No voice on this device",
+  voice: "Voice",
+  voiceBody: "Read out loud, using the voices already on this device. Nothing is downloaded and nothing is sent anywhere.",
+  voiceNone: "This device has no speech voices installed.",
+  voiceDefault: "System default",
+  voiceRate: "Voice pace",
+
   contents: "Contents",
   look: "Look",
   shortcuts: "Keyboard",

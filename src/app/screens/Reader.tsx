@@ -2,9 +2,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
 import type { Block, Section, SomethingDocument } from "@core/model/types";
 import { sentenceBounds } from "@core/text/sentences";
-import { Button, FocusWord, Icon, Sheet, Slider, Typing, WheelPicker } from "@ui/components";
+import { ActionMenu, Button, FocusWord, Icon, Sheet, Slider, Typing, WheelPicker } from "@ui/components";
 import { copy } from "@ui/copy";
 import { useSettings } from "../providers/settings-context";
+import { useVoice } from "../hooks/useVoice";
 import { estimateMs, timecode, timeLeft } from "../format";
 import { VERSION } from "../version";
 import { AppearanceControls } from "./AppearanceControls";
@@ -38,11 +39,29 @@ export const Reader = ({
   const [mode, setMode] = useState<Mode>("focus");
   const [panel, setPanel] = useState<Panel>(null);
   const [showHint, setShowHint] = useState(true);
+  const [listening, setListening] = useState(false);
+  const voice = useVoice(doc, engine, { voice: settings.voice, rate: settings.voiceRate });
 
+  /**
+   * One transport, two clocks. With the voice on, the engine is a position
+   * the narrator moves; with it off, the engine paces itself. Which one is
+   * running is never both.
+   */
+  const running = snapshot?.playing || voice.speaking;
   const toggle = useCallback(() => {
     setShowHint(false);
+    if (listening && voice.available) {
+      if (voice.speaking) voice.stop();
+      else voice.start();
+      return;
+    }
     engine.current?.toggle();
-  }, [engine]);
+  }, [engine, listening, voice]);
+
+  // Turning the voice off mid-sentence has to silence it, not orphan it.
+  useEffect(() => {
+    if (!listening) voice.stop();
+  }, [listening, voice]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -82,10 +101,53 @@ export const Reader = ({
         <span className="reader-title mono">{doc.title}</span>
         <div className="reader-top-actions">
           {doc.sections.length > 1 && (
-            <Button variant="circle" icon="contents" aria-label={copy.contents} onClick={() => setPanel("contents")} />
+            <Button
+              variant="circle"
+              className="is-overflowable"
+              icon="contents"
+              aria-label={copy.contents}
+              onClick={() => setPanel("contents")}
+            />
           )}
-          <Button variant="circle" icon="textsize" aria-label={copy.look} onClick={() => setPanel("look")} />
-          <Button variant="circle" icon="gauge" aria-label={copy.pace} onClick={() => setPanel("pace")} />
+          <Button
+            variant="circle"
+            className="is-overflowable"
+            icon="textsize"
+            aria-label={copy.look}
+            onClick={() => setPanel("look")}
+          />
+          <Button
+            variant="circle"
+            className="is-overflowable"
+            icon="gauge"
+            aria-label={copy.pace}
+            onClick={() => setPanel("pace")}
+          />
+          {/* Same three panels, one button, below 380px. */}
+          <ActionMenu
+            label={copy.look}
+            trigger={
+              <span className="btn btn-circle is-overflow">
+                <Icon name="chunk" size={20} />
+              </span>
+            }
+            actions={[
+              ...(doc.sections.length > 1
+                ? [{ id: "contents", label: copy.contents, icon: "contents" as const, onSelect: () => setPanel("contents") }]
+                : []),
+              { id: "look", label: copy.look, icon: "textsize", onSelect: () => setPanel("look") },
+              { id: "pace", label: copy.pace, icon: "gauge", onSelect: () => setPanel("pace") },
+            ]}
+          />
+          {/* Listen is a mode, not a panel, so it never collapses. */}
+          <Button
+            variant="circle"
+            className={listening ? "is-primary" : ""}
+            icon="listen"
+            aria-label={listening ? copy.listenOff : voice.available ? copy.listen : copy.listenNone}
+            disabled={!voice.available}
+            onClick={() => setListening((on) => !on)}
+          />
         </div>
       </header>
 
@@ -96,7 +158,7 @@ export const Reader = ({
           doc={doc}
           activeBlockId={snapshot?.position.blockId}
           cursor={snapshot?.position.charOffset ?? 0}
-          playing={snapshot?.playing ?? false}
+          playing={running ?? false}
           onJump={(block) => {
             engine.current?.seekToChar(block.charStart);
             setMode("focus");
@@ -108,7 +170,7 @@ export const Reader = ({
       {snapshot && (
         <div className="dock">
           <p className="dock-status mono">
-            {snapshot.playing ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.read}
+            {running ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.read}
           </p>
           <div className="dock-controls">
             <Button
@@ -120,8 +182,8 @@ export const Reader = ({
             <Button
               variant="circle"
               className="is-primary is-lead"
-              icon={snapshot.playing ? "stop" : "play"}
-              aria-label={snapshot.playing ? copy.stop : snapshot.finished ? copy.restart : copy.play}
+              icon={running ? "stop" : "play"}
+              aria-label={running ? copy.stop : snapshot.finished ? copy.restart : copy.play}
               onClick={toggle}
             />
             <Slider

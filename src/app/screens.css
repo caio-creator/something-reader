@@ -672,6 +672,23 @@
   gap: var(--space-2);
 }
 
+/*
+ * Four 44px circles and a title do not fit a 360px phone. Close and Listen
+ * stay — one is the way out and the other is a mode — and the three panel
+ * openers become the menu they already are.
+ */
+@media (max-width: 379px) {
+  .reader-top-actions .is-overflowable {
+    display: none;
+  }
+}
+
+@media (min-width: 380px) {
+  .reader-top-actions .is-overflow {
+    display: none;
+  }
+}
+
 .focus-stage {
   flex: 1;
   position: relative;
@@ -1484,4 +1501,16 @@
   background: var(--accent);
   color: var(--accent-ink);
   border-color: transparent;
+}
+
+
+/* A group that has to explain itself before it offers a control. */
+.group-note {
+  padding: 0 var(--space-2) var(--space-1);
+  font-size: var(--step-label);
+  color: var(--text-2);
+}
+
+.group-note.is-quiet {
+  color: var(--text-3);
 }

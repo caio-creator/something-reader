@@ -175,6 +175,8 @@ export const Specimen = () => {
               <Button variant="circle" icon="contents" aria-label="Contents" />
               <Button variant="circle" icon="textsize" aria-label="Look" />
               <Button variant="circle" icon="gauge" aria-label="Pace" />
+              <Button variant="circle" className="is-primary" icon="listen" aria-label="Listening" />
+              <Button variant="circle" icon="listen" aria-label="Listen" disabled />
             </div>
           </Cell>
           <Cell label="circle transport">

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, FocusWord, Icon, Menu, Segmented, Slider, Swatches, useToast, type IconName } from "@ui/components";
 import { copy } from "@ui/copy";
 import { clearAll, estimateUsage } from "@core/storage/idb";
 import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
+import { SystemTTSProvider } from "@core/voice/system";
+import type { VoiceOption } from "@core/voice/types";
 import { useSettings } from "../providers/settings-context";
 import { formatBytes } from "../format";
 import { VERSION } from "../version";
@@ -39,6 +41,34 @@ export const SettingsScreen = () => {
   useEffect(() => {
     void estimateUsage().then(({ usage: used }) => setUsage(used));
   }, []);
+
+  /*
+   * The device's own voices. Listing them here rather than in the reader keeps
+   * the choice where every other reading preference lives, and means the
+   * reader's own button is a switch and nothing more.
+   */
+  const [voices, setVoices] = useState<VoiceOption[]>([]);
+  useEffect(() => {
+    const provider = new SystemTTSProvider();
+    if (!provider.available()) return;
+    let live = true;
+    void provider.voices().then((found) => {
+      if (live) setVoices(found);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const voiceItems = useMemo(
+    () => [
+      { value: "", label: copy.voiceDefault },
+      // The language matters more than the name when picking one to be read
+      // to for an hour, so it leads.
+      ...voices.map((voice) => ({ value: voice.id, label: `${voice.lang} · ${voice.name}` })),
+    ],
+    [voices],
+  );
 
   return (
     <main className="settings" id="main">
@@ -117,6 +147,36 @@ export const SettingsScreen = () => {
             onChange={(value) => update({ chunkSize: Number(value) as 1 | 2 | 3 })}
           />
         </Row>
+      </section>
+
+      <h2 className="group-title">{copy.voice}</h2>
+      <section className="group">
+        <p className="group-note">{copy.voiceBody}</p>
+        {voices.length === 0 ? (
+          <p className="group-note is-quiet">{copy.voiceNone}</p>
+        ) : (
+          <>
+            <Row icon="listen" label={copy.voice} inline>
+              <Menu
+                label={copy.voice}
+                value={settings.voice ?? ""}
+                items={voiceItems}
+                onChange={(voice) => update({ voice: voice || null })}
+              />
+            </Row>
+            <Row icon="gauge" label={copy.voiceRate} hint={`${settings.voiceRate.toFixed(2)}x`}>
+              <Slider
+                label={copy.voiceRate}
+                min={0.5}
+                max={2}
+                step={0.05}
+                value={settings.voiceRate}
+                valueText={`${settings.voiceRate.toFixed(2)} times`}
+                onChange={(voiceRate) => update({ voiceRate })}
+              />
+            </Row>
+          </>
+        )}
       </section>
 
       <h2 className="group-title">{copy.shortcuts}</h2>
