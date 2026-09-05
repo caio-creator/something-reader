@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Icon, Ring, Sheet } from "@ui/components";
+import { ActionMenu, Button, EmptyState, Icon, Ring, Sheet } from "@ui/components";
 import { copy } from "@ui/copy";
 import type { LibraryItem } from "@core/storage/types";
 import { estimateMs, timeLeft } from "../format";
@@ -9,11 +9,13 @@ export const Things = ({
   wpm,
   onOpen,
   onRemove,
+  onAdd,
 }: {
   items: LibraryItem[];
   wpm: number;
   onOpen: (id: string) => void;
   onRemove: (id: string, title: string) => void;
+  onAdd: (kind: "paste" | "link" | "file" | "sample") => void;
 }) => {
   const [query, setQuery] = useState("");
   const [pendingRemoval, setPendingRemoval] = useState<LibraryItem | null>(null);
@@ -32,7 +34,19 @@ export const Things = ({
   return (
     <main className="things" id="main">
       <header className="things-head">
-        <h1>{copy.things}</h1>
+        <div className="screen-bar">
+          <h1>{copy.things}</h1>
+          <ActionMenu
+            label={copy.importLabel}
+            trigger={<span className="add-button"><Icon name="close" size={20} className="add-glyph" /></span>}
+            actions={[
+              { id: "paste", label: copy.paste, icon: "paste", onSelect: () => onAdd("paste") },
+              { id: "link", label: copy.link, icon: "link", onSelect: () => onAdd("link") },
+              { id: "file", label: copy.openFile, icon: "file", onSelect: () => onAdd("file") },
+              { id: "sample", label: copy.sample, icon: "bolt", onSelect: () => onAdd("sample") },
+            ]}
+          />
+        </div>
         <div className="search">
           <Icon name="search" size={17} />
           <input
@@ -47,14 +61,19 @@ export const Things = ({
       </header>
 
       {items.length === 0 ? (
-        <p className="empty">
-          <strong>{copy.emptyTitle}</strong>
-          <span>{copy.emptyBody}</span>
-        </p>
+        <div className="things-empty">
+          <EmptyState icon="info" title={copy.emptyWhy} body={copy.emptyWhyBody} />
+          <EmptyState
+            icon="things"
+            title={copy.emptyTitle}
+            body={copy.emptyBody}
+            action={<Button variant="primary" icon="bolt" onClick={() => onAdd("sample")}>{copy.sample}</Button>}
+          />
+        </div>
       ) : filtered.length === 0 ? (
-        <p className="empty">
-          <strong>{copy.notFound}</strong>
-        </p>
+        <div className="things-empty">
+          <EmptyState icon="search" title={copy.notFound} body={copy.notFoundBody} />
+        </div>
       ) : (
         <ul className="thing-list">
           {filtered.map((item) => {

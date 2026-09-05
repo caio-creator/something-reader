@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ACCEPTED_EXTENSIONS } from "@core/importers";
 import { Button, FocusWord, Sheet } from "@ui/components";
 import { copy } from "@ui/copy";
@@ -8,6 +8,9 @@ import { VERSION } from "../version";
 type Props = {
   state: ImportState;
   dragging: boolean;
+  /** An intent handed over from another screen's add menu. */
+  pending?: "paste" | "link" | "file" | "sample" | null;
+  onPendingHandled?: () => void;
   onFile: (file: File) => void;
   onText: (text: string) => void;
   onUrl: (url: string) => void;
@@ -18,6 +21,8 @@ type Props = {
 export const ReadNow = ({
   state,
   dragging,
+  pending,
+  onPendingHandled,
   onFile,
   onText,
   onUrl,
@@ -27,6 +32,13 @@ export const ReadNow = ({
   const [sheet, setSheet] = useState<"paste" | "link" | null>(null);
   const [draft, setDraft] = useState("");
   const fileInput = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!pending) return;
+    if (pending === "file") fileInput.current?.click();
+    else if (pending === "paste" || pending === "link") setSheet(pending);
+    onPendingHandled?.();
+  }, [pending, onPendingHandled]);
 
   const submit = () => {
     if (!draft.trim()) return;

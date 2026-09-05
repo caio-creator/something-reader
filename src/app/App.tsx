@@ -42,6 +42,7 @@ const Shell = () => {
   const [tab, setTab] = useState<TabKey>("now");
   const [doc, setDoc] = useState<SomethingDocument | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [pendingAdd, setPendingAdd] = useState<"paste" | "link" | "file" | "sample" | null>(null);
 
   const open = useCallback((next: SomethingDocument) => setDoc(next), []);
   const library = useLibrary(open);
@@ -122,6 +123,8 @@ const Shell = () => {
         <ReadNow
           state={library.state}
           dragging={dragging}
+          pending={pendingAdd}
+          onPendingHandled={() => setPendingAdd(null)}
           onFile={library.addFile}
           onText={library.addText}
           onUrl={library.addUrl}
@@ -137,6 +140,14 @@ const Shell = () => {
           onOpen={(id) => void openById(id)}
           onRemove={(id, title) => {
             void library.remove(id).then(() => toast(`${title} removed`, "trash"));
+          }}
+          onAdd={(kind) => {
+            if (kind === "sample") {
+              void library.addSample();
+              return;
+            }
+            setPendingAdd(kind);
+            setTab("now");
           }}
         />
       )}

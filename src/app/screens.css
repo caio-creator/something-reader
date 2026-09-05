@@ -5,6 +5,41 @@
   background: var(--bg);
 }
 
+/*
+ * Ambient light from the top edge. It is the one place the accent is allowed
+ * to be atmosphere instead of signal, and it is what stops a near-black app
+ * from reading as a void. Fixed rather than scrolled, so it behaves like light
+ * in the room and not like a banner.
+ */
+.app::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--glow-height);
+  background: radial-gradient(118% 100% at 50% -28%, var(--glow), transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app.is-reading::before {
+  /* Nothing competes with the word. */
+  opacity: 0;
+  transition: opacity var(--dur-route) var(--ease);
+}
+
+/* Only the screens lift above the glow. A blanket rule here also overrode the
+   skip link's fixed positioning and pinned it on screen. */
+.read-now,
+.things,
+.settings,
+.onboarding,
+.specimen {
+  position: relative;
+  z-index: 1;
+}
+
 .boot {
   min-height: 100dvh;
   background: var(--bg);
@@ -162,11 +197,26 @@
   gap: var(--space-4);
 }
 
+.screen-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.things-empty {
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--space-3);
+}
+
 .things h1,
 .settings h1 {
-  font-size: var(--step-title);
-  letter-spacing: var(--track-title);
-  font-weight: 650;
+  font-size: var(--step-display);
+  letter-spacing: var(--track-display);
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .search {
@@ -356,7 +406,7 @@
 
 /* A nested screen, so the preview reads as the reader and not as a card. */
 .preview-screen {
-  border-radius: 14px;
+  border-radius: calc(var(--radius-card) - var(--pad-card));
   background: var(--bg);
   padding: var(--space-5) var(--space-4);
   box-shadow: inset 0 0 0 1px var(--hairline);
@@ -404,9 +454,9 @@
 .row-icon {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-tile);
   background: var(--surface-2);
   color: var(--text-2);
   flex: none;
@@ -1009,54 +1059,116 @@
 }
 
 /*
- * The reading trail. Three weights of the same amber: what has been read, the
- * sentence being read, and the word under the engine.
+ * The reading trail, drawn like a highlighter rather than a fill.
+ *
+ * Three states, and they read as one gesture: text not yet reached is dimmer
+ * because it has not been read, text already passed sits just under full
+ * strength, and the word being read carries the mark. The mark itself is a
+ * band that stops short of the line box with soft ends and uneven corners —
+ * the shape a marker actually leaves, not a rectangle.
  */
 .word {
-  border-radius: 3px;
-  transition:
-    background-color var(--dur-control) var(--ease),
-    color var(--dur-press) ease-out;
+  transition: opacity var(--dur-control) var(--ease), color var(--dur-press) ease-out;
 }
 
-.word.is-read {
-  background: color-mix(in srgb, var(--anchor) 10%, transparent);
+.prose .block.is-active .word {
+  opacity: 0.52;
 }
 
-.word.in-sentence {
-  background: color-mix(in srgb, var(--anchor) 18%, transparent);
+.prose .block.is-active .word.is-read {
+  opacity: 0.82;
+}
+
+.prose .block.is-active .word.in-sentence {
+  opacity: 0.72;
 }
 
 .word.is-now {
-  background: var(--anchor);
+  opacity: 1;
   color: var(--accent-ink);
-  box-shadow: 0 0 0 1.5px var(--anchor);
-  border-radius: 4px;
+  /* Ink pooling at the ends, thinner through the middle, and a band that does
+     not fill the line box. */
+  background:
+    linear-gradient(
+      100deg,
+      transparent 0,
+      color-mix(in srgb, var(--anchor) 88%, transparent) 3%,
+      var(--anchor) 14%,
+      var(--anchor) 86%,
+      color-mix(in srgb, var(--anchor) 88%, transparent) 97%,
+      transparent 100%
+    )
+    0 58% / 100% 82% no-repeat;
+  border-radius: 3px 9px 4px 8px;
+  padding: 0 1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 :root[data-theme="paper"] .word.is-now {
   color: var(--surface);
 }
 
-/* Paragraphs already passed keep a whisper of the trail, so progress through
-   the whole document is visible without scrolling back. */
+/* Paragraphs already passed keep a whisper of the trail. */
 .prose .block.is-read {
-  color: color-mix(in srgb, var(--text-read) 74%, transparent);
+  color: color-mix(in srgb, var(--text-read) 70%, transparent);
 }
 
+.prose .block.is-ahead {
+  color: color-mix(in srgb, var(--text-read) 88%, transparent);
+}
+
+/*
+ * Jumping into focus from a paragraph is a gesture, not a sentence. It sits in
+ * the gutter beside the paragraph so it never breaks the line it belongs to,
+ * and it only appears on the paragraph you are actually on.
+ */
 .jump {
-  display: inline-flex;
-  align-items: center;
-  margin-left: var(--space-2);
-  padding: 3px 10px;
+  position: absolute;
+  top: 0.1em;
+  right: calc(100% + var(--space-4));
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: var(--step-eyebrow);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  vertical-align: middle;
-  transition: transform var(--dur-press) ease-out;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  color: var(--text-2);
+  opacity: 0;
+  transition:
+    opacity var(--enter),
+    background-color var(--enter),
+    color var(--enter),
+    transform var(--dur-press) ease-out;
+}
+
+.prose .block.is-active .jump,
+.jump:focus-visible {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .jump:hover {
+    background: var(--accent);
+    border-color: transparent;
+    color: var(--accent-ink);
+  }
+}
+
+.jump:active {
+  transform: scale(0.92);
+}
+
+/* No gutter on a phone: it tucks against the paragraph's leading edge instead. */
+@media (max-width: 899px) {
+  .jump {
+    right: auto;
+    left: calc(-1 * var(--space-2));
+    top: -42px;
+    width: 30px;
+    height: 30px;
+  }
 }
 
 .jump:active {
@@ -1242,4 +1354,40 @@
   padding: var(--space-4) 0;
   background: var(--bg);
   border-radius: var(--radius-control);
+}
+
+/* ---------- the add button ---------- */
+
+.add-button {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  color: var(--text);
+  transition: background-color var(--enter), transform var(--dur-press) ease-out, box-shadow var(--enter);
+}
+
+/* The close glyph rotated is a plus, so the set keeps one drawing. */
+.add-glyph {
+  transform: rotate(45deg);
+}
+
+@media (hover: hover) {
+  .add-button:hover {
+    background: var(--surface-3);
+    box-shadow: 0 0 0 4px var(--accent-wash);
+  }
+}
+
+.action-trigger:active .add-button {
+  transform: scale(0.94);
+}
+
+.action-trigger[aria-expanded="true"] .add-button {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: transparent;
 }

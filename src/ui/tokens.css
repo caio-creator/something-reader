@@ -52,6 +52,11 @@
   --glass-sheet: rgba(20, 19, 17, 0.86);
   --glass-edge-top: rgba(255, 255, 255, 0.16);
   --glass-edge-bottom: rgba(0, 0, 0, 0.55);
+
+  /* Ambient light bleeding from the top edge. The one place the accent is
+     allowed to be atmosphere rather than signal. */
+  --glow: rgba(232, 163, 61, 0.3);
+  --glow-height: 340px;
 }
 
 :root[data-theme="dim"] {
@@ -78,6 +83,7 @@
 
   --glass: rgba(34, 32, 29, 0.74);
   --glass-sheet: rgba(26, 25, 23, 0.88);
+  --glow: rgba(232, 163, 61, 0.22);
 }
 
 :root[data-theme="paper"] {
@@ -117,6 +123,7 @@
   --glass-sheet: rgba(255, 253, 249, 0.9);
   --glass-edge-top: rgba(255, 255, 255, 0.9);
   --glass-edge-bottom: rgba(22, 19, 15, 0.12);
+  --glow: rgba(148, 96, 15, 0.13);
 }
 
 :root {
@@ -167,11 +174,16 @@
   --space-7: 48px;
   --space-8: 64px;
 
-  --radius-card: 18px;
-  --pad-card: 16px;
-  /* Concentric: an inner radius is the outer minus the padding between them. */
-  --radius-control: calc(var(--radius-card) - var(--pad-card) + 8px);
-  --radius-sheet: 24px;
+  /*
+   * Generous, and concentric: an inner radius is the outer minus the padding
+   * between them, so a control inside a card curves with it rather than
+   * against it.
+   */
+  --radius-card: 26px;
+  --pad-card: 18px;
+  --radius-control: 16px;
+  --radius-tile: 13px;
+  --radius-sheet: 34px;
   --radius-pill: 999px;
 
   --h-sm: 32px;

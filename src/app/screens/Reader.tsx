@@ -458,8 +458,14 @@ const BlockView = memo(
         {active ? (
           <>
             <TrackedText text={block.text} cursor={cursor} />
-            <button type="button" className="jump mono" onClick={() => onJump(block)}>
-              {copy.focusHere}
+            <button
+              type="button"
+              className="jump"
+              title={copy.focusHere}
+              aria-label={copy.focusHere}
+              onClick={() => onJump(block)}
+            >
+              <Icon name="bolt" size={16} />
             </button>
           </>
         ) : (

@@ -98,6 +98,32 @@ a {
   color: var(--text);
 }
 
+/*
+ * Where the browser can draw a squircle, it should: a rounded rect this
+ * generous shows its four arc joins, and a continuous curve does not.
+ */
+@supports (corner-shape: squircle) {
+  .btn-row,
+  .btn-primary,
+  .btn-circle,
+  .import-card,
+  .group,
+  .thing,
+  .sheet,
+  .menu-list,
+  .dock,
+  .tabbar,
+  .preview-card,
+  .empty-state,
+  .spec-cell,
+  .onboarding-card,
+  .row-icon,
+  .empty-icon,
+  .add-button {
+    corner-shape: squircle;
+  }
+}
+
 /* The mono voice: eyebrows, timecodes, counts, version stamps. */
 .mono {
   font-family: var(--font-mono);
