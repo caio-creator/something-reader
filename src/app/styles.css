@@ -66,10 +66,16 @@ button {
   min-height: 32px;
   padding: 0 12px;
   cursor: pointer;
-  transition: background-color 150ms var(--ease), opacity 150ms var(--ease);
+  touch-action: manipulation;
+  transition: background-color 150ms var(--ease), opacity 150ms var(--ease), transform 150ms var(--ease);
 }
 button:hover { background: var(--fill-quaternary); }
-button:active { opacity: 0.72; }
+button:active { transform: scale(0.97); }
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--fill) 55%, transparent);
   outline-offset: 2px;
@@ -110,7 +116,8 @@ button.danger {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px 12px 24px;
+  padding: 20px 12px calc(24px + env(safe-area-inset-bottom));
+  padding-left: max(12px, env(safe-area-inset-left));
   background: var(--grouped);
   border-right: 0.5px solid var(--separator);
 }
@@ -145,13 +152,22 @@ button.danger {
   outline: 2px solid var(--fill);
   outline-offset: 0;
 }
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -40px;
+  z-index: 100;
+  padding: 8px 12px;
+  background: var(--grouped-2);
+  color: var(--fill);
+  border-radius: 8px;
+}
+.skip:focus { top: 12px; }
 .sheet-label {
   margin: 0 0 4px;
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 590;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--secondary-label);
 }
 .import-rows { display: grid; gap: 8px; }
@@ -243,7 +259,7 @@ button.danger {
 .topbar {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -251,6 +267,7 @@ button.danger {
   min-height: 52px;
   padding: 8px 16px;
   border-bottom: 0.5px solid var(--separator);
+  /* Web approximation of HIG materials, not Apple Liquid Glass. */
   background: color-mix(in srgb, var(--canvas) 72%, transparent);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -302,12 +319,13 @@ button.danger {
   padding: 48px 24px 96px;
 }
 .article {
-  max-width: 66ch;
+  max-width: 65ch;
   margin: 0 auto;
   font-family: var(--font-read);
   font-size: var(--size);
-  line-height: 1.55;
+  line-height: 1.62;
   font-weight: 400;
+  font-optical-sizing: auto;
 }
 .article h2, .article h3 {
   font-family: var(--font-ui);
@@ -344,7 +362,7 @@ button.danger {
   padding: 64px 24px;
   max-width: 28rem;
 }
-.empty h2 {
+.empty h1 {
   font-size: 34px;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -370,6 +388,11 @@ button.danger {
   grid-template-columns: 1fr auto 1fr;
   align-items: baseline;
   min-width: min(90vw, 40rem);
+  animation: word-in 180ms var(--ease);
+}
+@keyframes word-in {
+  from { opacity: 0.28; }
+  to { opacity: 1; }
 }
 .focus-word .before { text-align: right; color: var(--secondary-label); }
 .focus-word .pivot { color: var(--fill); }
@@ -393,7 +416,8 @@ button.danger {
 
 .dock {
   position: sticky;
-  bottom: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 20;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -476,5 +500,5 @@ textarea.paste:focus-visible {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }

@@ -196,6 +196,9 @@ export const App = () => {
 
   return (
     <div className="app">
+      <a className="skip" href="#main">
+        Skip to reading
+      </a>
       <aside className="sidebar">
         <div className="brand">
           <div className="mark">
@@ -220,15 +223,15 @@ export const App = () => {
         >
           <p className="sheet-label">{busy ? copy.adding : copy.importLabel}</p>
           <div className="import-rows">
-            <button type="button" className="row" onClick={() => setPasteOpen((v) => !v)}>
+            <button type="button" className="row" disabled={busy} onClick={() => setPasteOpen((v) => !v)}>
               {copy.paste}
             </button>
-            <button type="button" className="row" onClick={() => fileRef.current?.click()}>
+            <button type="button" className="row" disabled={busy} onClick={() => fileRef.current?.click()}>
               {copy.openFile}
             </button>
           </div>
           <p className="or">{copy.or}</p>
-          <button type="button" className="row sample" onClick={() => void loadSample()}>
+          <button type="button" className="row sample" disabled={busy} onClick={() => void loadSample()}>
             {copy.sample}
           </button>
           <p className="hint">{over ? copy.drop : copy.hint}</p>
@@ -256,7 +259,11 @@ export const App = () => {
               </button>
             </>
           )}
-          {error && <p className="banner">{error}</p>}
+          {error && (
+            <p className="banner" role="alert" aria-live="assertive">
+              {error}
+            </p>
+          )}
         </div>
 
         <div>
@@ -295,7 +302,7 @@ export const App = () => {
         </div>
       </aside>
 
-      <main className="main">
+      <main className="main" id="main">
         {doc ? (
           <>
             <header className="topbar">
@@ -371,6 +378,7 @@ export const App = () => {
                   type="button"
                   className="danger"
                   onClick={() => {
+                    if (!window.confirm(`Remove “${doc.title}”?`)) return;
                     const id = doc.id;
                     engineRef.current?.dispose();
                     setDoc(null);
@@ -440,7 +448,7 @@ export const App = () => {
           </>
         ) : (
           <div className="empty">
-            <h2>{items.length === 0 ? copy.emptyTitle : copy.tagline}</h2>
+            <h1>{items.length === 0 ? copy.emptyTitle : copy.tagline}</h1>
             <p>{items.length === 0 ? copy.emptyBody : copy.finish}</p>
           </div>
         )}
@@ -560,7 +568,7 @@ const FocusView = ({
         </div>
       )}
       <div className="guides">
-        <div className="focus-word">
+        <div className="focus-word" key={word}>
           <span className="before">{parts.before}</span>
           <span className="pivot">{parts.pivot}</span>
           <span className="after">{parts.after}</span>
