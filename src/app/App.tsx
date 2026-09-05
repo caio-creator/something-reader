@@ -37,6 +37,7 @@ export const App = () => {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [paste, setPaste] = useState("");
   const [over, setOver] = useState(false);
+  const [hint, setHint] = useState(true);
   const [snap, setSnap] = useState<EngineSnapshot | null>(null);
   const [resume, setResume] = useState<ReadingPosition | null>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -217,19 +218,20 @@ export const App = () => {
             if (file) void ingest(file);
           }}
         >
-          <strong>{busy ? copy.adding : copy.drop}</strong>
-          <p className="hint">{copy.hint}</p>
-          <div className="actions">
-            <button className="primary" type="button" onClick={() => fileRef.current?.click()}>
-              {copy.openFile}
-            </button>
-            <button className="plain" type="button" onClick={() => setPasteOpen((v) => !v)}>
+          <p className="sheet-label">{busy ? copy.adding : copy.importLabel}</p>
+          <div className="import-rows">
+            <button type="button" className="row" onClick={() => setPasteOpen((v) => !v)}>
               {copy.paste}
             </button>
-            <button className="plain" type="button" onClick={() => void loadSample()}>
-              {copy.sample}
+            <button type="button" className="row" onClick={() => fileRef.current?.click()}>
+              {copy.openFile}
             </button>
           </div>
+          <p className="or">{copy.or}</p>
+          <button type="button" className="row sample" onClick={() => void loadSample()}>
+            {copy.sample}
+          </button>
+          <p className="hint">{over ? copy.drop : copy.hint}</p>
           <input
             ref={fileRef}
             hidden
@@ -276,7 +278,11 @@ export const App = () => {
                   >
                     <span className="title">{item.title}</span>
                     <span className="meta">
-                      {item.sourceType} · {item.wordCount.toLocaleString()} words
+                      {item.progress >= 0.97
+                        ? copy.finished
+                        : item.progress > 0.02
+                          ? copy.continue
+                          : `${item.sourceType} · ${item.wordCount.toLocaleString()} words`}
                     </span>
                     <span className="progress">
                       <span style={{ width: `${Math.round(item.progress * 100)}%` }} />
@@ -293,6 +299,17 @@ export const App = () => {
         {doc ? (
           <>
             <header className="topbar">
+              <button
+                type="button"
+                className="plain icon-btn"
+                aria-label={copy.close}
+                onClick={() => {
+                  engineRef.current?.pause();
+                  setDoc(null);
+                }}
+              >
+                {copy.close}
+              </button>
               <h1>{doc.title}</h1>
               <div className="controls">
                 <div className="segmented" role="tablist" aria-label="Reading mode">
@@ -381,14 +398,39 @@ export const App = () => {
             ) : (
               <FocusView
                 snap={snap}
-                onToggle={() => engineRef.current?.toggle()}
+                hint={hint}
+                onDismissHint={() => setHint(false)}
+                onToggle={() => {
+                  setHint(false);
+                  engineRef.current?.toggle();
+                }}
                 onSeek={(value) => engineRef.current?.seek(value)}
               />
             )}
-            {mode === "focus" && snap && (
+            {mode === "read" && (
               <div className="dock">
                 <div className="dock-inner">
+                  <button className="primary" type="button" onClick={() => setMode("focus")}>
+                    {copy.focusHere}
+                  </button>
+                </div>
+              </div>
+            )}
+            {mode === "focus" && snap && (
+              <div className="dock">
+                <div className="dock-inner wide">
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.max(0, snap.length - 1)}
+                    value={snap.index}
+                    aria-label="Position"
+                    onChange={(e) => engineRef.current?.seek(Number(e.target.value))}
+                  />
                   <span className="status">{progressLabel}</span>
+                  <button type="button" className="plain" onClick={() => setMode("read")}>
+                    {copy.explorer}
+                  </button>
                   <button className="primary" type="button" onClick={() => engineRef.current?.toggle()}>
                     {snap.playing ? copy.pause : copy.play}
                   </button>
@@ -491,10 +533,13 @@ const ReadView = ({
 
 const FocusView = ({
   snap,
+  hint,
+  onDismissHint,
   onToggle,
-  onSeek,
 }: {
   snap: EngineSnapshot | null;
+  hint: boolean;
+  onDismissHint: () => void;
   onToggle: () => void;
   onSeek: (index: number) => void;
 }) => {
@@ -502,6 +547,18 @@ const FocusView = ({
   const parts = splitOrp(word || "·");
   return (
     <div className="focus" onClick={onToggle}>
+      {hint && (
+        <div
+          className="toast"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDismissHint();
+          }}
+        >
+          <strong>{copy.tapTitle}</strong>
+          <span>{copy.tapBody}</span>
+        </div>
+      )}
       <div className="guides">
         <div className="focus-word">
           <span className="before">{parts.before}</span>
@@ -509,16 +566,6 @@ const FocusView = ({
           <span className="after">{parts.after}</span>
         </div>
       </div>
-      {snap && (
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, snap.length - 1)}
-          value={snap.index}
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => onSeek(Number(e.target.value))}
-        />
-      )}
     </div>
   );
 };
