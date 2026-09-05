@@ -1,4 +1,5 @@
 import type { SomethingDocument } from "../model/types";
+import { baseLanguage, detectLanguage, type LanguageCode } from "../text/language";
 import { tokenizeDocument, type Token } from "../engine/tokenize";
 import { endsSentence } from "../text/sentences";
 import { normalizeForSpeech } from "./normalize";
@@ -21,6 +22,14 @@ const MAX_TOKENS = 60;
  */
 export const segmentDocument = (doc: SomethingDocument): Narration => {
   const tokens = tokenizeDocument(doc);
+  /*
+   * A declared language is worth more than a guess, but only EPUB declares one
+   * — a PDF, a paste or a link arrive with nothing and the narrator still has
+   * to pick. Detection reads the opening prose, which is where a book is most
+   * itself.
+   */
+  const opening = doc.sections[0]?.blocks.map((b) => b.text).join(" ") ?? "";
+  const lang: LanguageCode | null = baseLanguage(doc.language) ?? detectLanguage(opening);
   const segments: NarrationSegment[] = [];
 
   let start = 0;
@@ -32,7 +41,7 @@ export const segmentDocument = (doc: SomethingDocument): Narration => {
       .slice(start, end)
       .map((t) => t.text)
       .join(" ");
-    const spoken = normalizeForSpeech(text);
+    const spoken = normalizeForSpeech(text, lang);
     // A segment with nothing sayable left in it — a lone URL, a rule of
     // dashes — would be a silence the reader cannot get out of.
     if (spoken) {
@@ -56,7 +65,7 @@ export const segmentDocument = (doc: SomethingDocument): Narration => {
     if (blockChanged || sentence || i - start + 1 >= MAX_TOKENS) flush(i + 1);
   }
 
-  return { segments, indexAtChar: (offset) => indexAtChar(segments, offset) };
+  return { segments, lang, indexAtChar: (offset) => indexAtChar(segments, offset) };
 };
 
 /**

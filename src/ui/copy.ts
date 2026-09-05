@@ -77,6 +77,17 @@ export const copy = {
   voiceNone: "This device has no speech voices installed.",
   voiceDefault: "System default",
   voiceRate: "Voice pace",
+  voiceEngine: "Engine",
+  voiceNatural: "Natural",
+  voiceSystem: "System",
+  voiceNaturalBody:
+    "Something Voice runs here, on this machine. One download of about 400 MB, then it works with the network off and nothing you read is ever sent anywhere.",
+  voiceSystemBody: "The voices already installed on this device. Nothing to download.",
+  voiceDownload: "Download",
+  voiceInstalled: "Installed",
+  voiceRemove: "Remove voice",
+  voiceRemoveBody: "The voice downloads again next time you use it.",
+  voiceGetting: "Getting the voice",
 
   contents: "Contents",
   look: "Look",

@@ -3,7 +3,8 @@ import type { Engine } from "@core/engine/engine";
 import type { SomethingDocument } from "@core/model/types";
 import { segmentDocument } from "@core/voice/segment";
 import { SystemTTSProvider } from "@core/voice/system";
-import type { NarrationSegment, VoiceOption } from "@core/voice/types";
+import { SupertonicProvider } from "@core/voice/supertonic/provider";
+import type { NarrationSegment, PackProgress, TTSProvider, VoiceOption } from "@core/voice/types";
 
 /**
  * Narration, driven off the same position everything else is driven off.
@@ -18,12 +19,20 @@ import type { NarrationSegment, VoiceOption } from "@core/voice/types";
 export const useVoice = (
   doc: SomethingDocument | null,
   engine: React.RefObject<Engine | null>,
-  options: { voice: string | null; rate: number },
+  options: { voice: string | null; rate: number; engine: "natural" | "system" },
 ) => {
-  const provider = useMemo(() => new SystemTTSProvider(), []);
+  /*
+   * Both providers are built, neither is loaded. Constructing the neural one
+   * costs nothing until something is spoken — the 409 MB arrives on the first
+   * play, or on an explicit download in Settings, and never again.
+   */
+  const natural = useMemo(() => new SupertonicProvider(), []);
+  const system = useMemo(() => new SystemTTSProvider(), []);
+  const provider: TTSProvider = options.engine === "natural" && natural.available() ? natural : system;
   const narration = useMemo(() => (doc ? segmentDocument(doc) : null), [doc]);
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [speaking, setSpeaking] = useState(false);
+  const [pack, setPack] = useState<PackProgress | null>(null);
 
   // Read at speak time, not closed over: changing the voice mid-document must
   // not rebuild the callback chain that is already mid-sentence.
@@ -58,9 +67,21 @@ export const useVoice = (
         return;
       }
       engine.current?.seekToChar(segment.charStart);
+      const speakOptions = {
+        voiceId: optionsRef.current.voice ?? undefined,
+        rate: optionsRef.current.rate,
+        lang: narration?.lang ?? undefined,
+      };
+      // Start the next sentences before this one is over. A model that takes
+      // about a second per second of speech cannot be asked at the boundary;
+      // the gap would be the length of the sentence.
+      for (let ahead = 1; ahead <= 2; ahead += 1) {
+        const next = narration?.segments[index + ahead];
+        if (next) provider.prefetch?.(next, speakOptions);
+      }
       provider.speak(
         segment,
-        { voiceId: optionsRef.current.voice ?? undefined, rate: optionsRef.current.rate },
+        speakOptions,
         {
           onBoundary: (charIndex) => engine.current?.seekToChar(offsetWithin(segment, charIndex)),
           onEnd: () => {
@@ -75,6 +96,9 @@ export const useVoice = (
 
   const start = useCallback(() => {
     if (!available || !narration || narration.segments.length === 0) return;
+    // The pack downloads on first play rather than behind a wall: the progress
+    // shows in the dock, and the reader is already where they wanted to be.
+    void provider.prepare?.((progress) => setPack(progress.received >= progress.total ? null : progress));
     // The voice is the clock now; two clocks would fight over the position.
     engine.current?.pause();
     running.current = true;
@@ -87,7 +111,7 @@ export const useVoice = (
   // that outlives its screen is the worst bug this feature can have.
   useEffect(() => stop, [doc, stop]);
 
-  return { available, voices, speaking, start, stop };
+  return { available, voices, speaking, pack, start, stop };
 };
 
 /**

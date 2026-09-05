@@ -17,11 +17,24 @@ self.addEventListener("install", (event) => {
   );
 });
 
+/*
+ * Caches that are not this shell but are also not ours to throw away.
+ *
+ * The voice pack is a 409 MB download the reader agreed to once. Sweeping
+ * every cache on activate would make every app update charge them for it
+ * again, which is the opposite of what "works offline afterwards" promised.
+ */
+const KEEP = /^something-voice-/;
+
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== VERSION && !KEEP.test(k)).map((k) => caches.delete(k)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });

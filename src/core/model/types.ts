@@ -95,7 +95,13 @@ export type ReaderSettings = {
   emphasis: TextEmphasis;
   /** Reading measure in `ch`. */
   measure: number;
-  /** A `VoiceOption.id`, or null for whatever the platform picks. */
+  /**
+   * Which engine narrates. `natural` is Something Voice, running here on this
+   * machine after a one-time download; `system` is whatever the device already
+   * has, which costs nothing and sounds like it.
+   */
+  voiceEngine: "natural" | "system";
+  /** A `VoiceOption.id`, or null for whatever the engine picks. */
   voice: string | null;
   /**
    * The narrator's pace, 1 being the voice's own. Deliberately not derived
@@ -115,6 +121,7 @@ export const defaultSettings = (): ReaderSettings => ({
   guides: "normal",
   emphasis: "normal",
   measure: 66,
+  voiceEngine: "natural",
   voice: null,
   voiceRate: 1,
 });

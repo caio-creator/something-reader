@@ -1,14 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button, FocusWord, Icon, Menu, Segmented, Slider, Swatches, useToast, type IconName } from "@ui/components";
 import { copy } from "@ui/copy";
 import { clearAll, estimateUsage } from "@core/storage/idb";
 import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
 import { SystemTTSProvider } from "@core/voice/system";
-import type { VoiceOption } from "@core/voice/types";
+import { SupertonicProvider } from "@core/voice/supertonic/provider";
+import { PACK } from "@core/voice/supertonic/pack";
+import type { TTSProvider, VoiceOption } from "@core/voice/types";
 import { useSettings } from "../providers/settings-context";
 import { formatBytes } from "../format";
 import { VERSION } from "../version";
 import { EMPHASES, FONTS, GUIDES, SIZES, THEMES } from "./AppearanceControls";
+
+const ENGINES = [
+  { value: "natural", label: copy.voiceNatural },
+  { value: "system", label: copy.voiceSystem },
+];
 
 const CHUNKS = [
   { value: "1", label: "1" },
@@ -43,29 +50,49 @@ export const SettingsScreen = () => {
   }, []);
 
   /*
-   * The device's own voices. Listing them here rather than in the reader keeps
-   * the choice where every other reading preference lives, and means the
-   * reader's own button is a switch and nothing more.
+   * The voices of whichever engine is selected. Listing them here rather than
+   * in the reader keeps the choice where every other reading preference lives,
+   * and means the reader's own button stays a switch and nothing more.
    */
   const [voices, setVoices] = useState<VoiceOption[]>([]);
+  const [packInstalled, setPackInstalled] = useState(false);
+  const [packProgress, setPackProgress] = useState<string | null>(null);
+  const natural = settings.voiceEngine === "natural";
+
   useEffect(() => {
-    const provider = new SystemTTSProvider();
-    if (!provider.available()) return;
+    const provider: TTSProvider = natural ? new SupertonicProvider() : new SystemTTSProvider();
+    if (!provider.available()) {
+      setVoices([]);
+      return;
+    }
     let live = true;
     void provider.voices().then((found) => {
       if (live) setVoices(found);
     });
+    void provider.ready?.().then((here: boolean) => {
+      if (live) setPackInstalled(here);
+    });
     return () => {
       live = false;
     };
-  }, []);
+  }, [natural]);
+
+  const onRemovePack = useCallback(async () => {
+    await new SupertonicProvider().uninstall();
+    setPackInstalled(false);
+    setPackProgress(null);
+    toast(copy.voiceRemove, "database");
+  }, [toast]);
 
   const voiceItems = useMemo(
     () => [
       { value: "", label: copy.voiceDefault },
-      // The language matters more than the name when picking one to be read
-      // to for an hour, so it leads.
-      ...voices.map((voice) => ({ value: voice.id, label: `${voice.lang} · ${voice.name}` })),
+      // A language-agnostic voice is a person, not a locale, so it is named as
+      // one; a system voice's language is the thing you are actually choosing.
+      ...voices.map((voice) => ({
+        value: voice.id,
+        label: voice.lang === "*" ? voice.name : `${voice.lang} · ${voice.name}`,
+      })),
     ],
     [voices],
   );
@@ -151,7 +178,26 @@ export const SettingsScreen = () => {
 
       <h2 className="group-title">{copy.voice}</h2>
       <section className="group">
-        <p className="group-note">{copy.voiceBody}</p>
+        <Row icon="listen" label={copy.voiceEngine}>
+          <Segmented
+            label={copy.voiceEngine}
+            value={settings.voiceEngine}
+            options={ENGINES}
+            onChange={(voiceEngine) => update({ voiceEngine: voiceEngine as "natural" | "system", voice: null })}
+          />
+        </Row>
+        <p className="group-note">
+          {settings.voiceEngine === "natural" ? copy.voiceNaturalBody : copy.voiceSystemBody}
+        </p>
+        {settings.voiceEngine === "natural" && (
+          <Row icon="database" label={copy.voiceNatural} hint={formatBytes(PACK.bytes)} inline>
+            {packInstalled ? (
+              <Button variant="quiet" onClick={onRemovePack}>{copy.voiceRemove}</Button>
+            ) : (
+              <span className="mono">{packProgress ?? copy.voiceDownload}</span>
+            )}
+          </Row>
+        )}
         {voices.length === 0 ? (
           <p className="group-note is-quiet">{copy.voiceNone}</p>
         ) : (

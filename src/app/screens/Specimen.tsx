@@ -195,6 +195,14 @@ export const Specimen = () => {
             </div>
           </Cell>
           <Cell label="primary hugging"><Button variant="primary" className="btn-hug" icon="sample">Try something</Button></Cell>
+          <Cell label="segmented (engine)">
+            <Segmented
+              label="Engine"
+              value="natural"
+              options={[{ value: "natural", label: "Natural" }, { value: "system", label: "System" }]}
+              onChange={() => {}}
+            />
+          </Cell>
           <Cell label="typing">
             <span className="mono"><Typing text={copy.readingNow} /></span>
           </Cell>

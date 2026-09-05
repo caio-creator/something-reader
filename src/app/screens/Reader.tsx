@@ -40,7 +40,11 @@ export const Reader = ({
   const [panel, setPanel] = useState<Panel>(null);
   const [showHint, setShowHint] = useState(true);
   const [listening, setListening] = useState(false);
-  const voice = useVoice(doc, engine, { voice: settings.voice, rate: settings.voiceRate });
+  const voice = useVoice(doc, engine, {
+    voice: settings.voice,
+    rate: settings.voiceRate,
+    engine: settings.voiceEngine,
+  });
 
   /**
    * One transport, two clocks. With the voice on, the engine is a position
@@ -170,7 +174,13 @@ export const Reader = ({
       {snapshot && (
         <div className="dock">
           <p className="dock-status mono">
-            {running ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.read}
+            {voice.pack
+              ? `${copy.voiceGetting} · ${Math.round((voice.pack.received / voice.pack.total) * 100)}%`
+              : running
+                ? <Typing text={copy.readingNow} />
+                : mode === "focus"
+                  ? copy.focus
+                  : copy.read}
           </p>
           <div className="dock-controls">
             <Button

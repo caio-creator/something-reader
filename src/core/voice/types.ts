@@ -1,4 +1,5 @@
 import type { SomethingDocument } from "../model/types";
+import type { LanguageCode } from "../text/language";
 
 /**
  * One utterance's worth of document.
@@ -26,16 +27,32 @@ export type NarrationSegment = {
 export type VoiceOption = {
   id: string;
   name: string;
-  /** BCP-47, as the platform reports it: "pt-BR", "en-US". */
+  /**
+   * BCP-47 as the platform reports it ("pt-BR", "en-US"), or "*" for a voice
+   * that is not tied to a language. A neural pack that speaks every language
+   * from one model has voices that are a timbre, not a locale, and offering
+   * "Sofia (pt-BR)" and "Sofia (en-US)" as two entries would be a lie about
+   * what the user is choosing.
+   */
   lang: string;
   /** False for a voice the platform synthesises on a server. */
   local: boolean;
 };
 
+export type PackProgress = { received: number; total: number };
+
 export type SpeakOptions = {
   voiceId?: string;
   /** 1 is the voice's own pace. Deliberately not the reader's WPM. */
   rate: number;
+  /**
+   * The document's language, as a bare code ("pt", "en", "es").
+   *
+   * It belongs to the utterance rather than the voice because a single model
+   * covering thirty-one languages needs telling which one this sentence is,
+   * while the voice stays the same person throughout.
+   */
+  lang?: string;
 };
 
 export type SpeakHandlers = {
@@ -65,10 +82,29 @@ export interface TTSProvider {
   voices(): Promise<VoiceOption[]>;
   speak(segment: NarrationSegment, options: SpeakOptions, handlers: SpeakHandlers): void;
   stop(): void;
+
+  /**
+   * Whether this provider can speak right now without downloading anything.
+   * The system voices are always ready; a neural pack is not until it is.
+   */
+  ready?(): Promise<boolean>;
+  /** One-time setup — for a neural pack, the download. */
+  prepare?(onProgress?: (progress: PackProgress) => void): Promise<void>;
+  /**
+   * Start work on a segment that has not been asked for yet.
+   *
+   * A model that takes about a second per second of speech cannot be asked for
+   * the next sentence when the current one ends — the gap would be the whole
+   * sentence. The caller says what is coming; the provider decides whether
+   * that means anything to it.
+   */
+  prefetch?(segment: NarrationSegment, options: SpeakOptions): void;
 }
 
 export type Narration = {
   segments: NarrationSegment[];
+  /** What the document turned out to be in, or null when nothing said. */
+  lang: LanguageCode | null;
   /** Segment covering a document char offset, for resuming mid-document. */
   indexAtChar: (charOffset: number) => number;
 };
