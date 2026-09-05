@@ -1123,13 +1123,14 @@
   color: var(--surface);
 }
 
-/* Paragraphs the pass has finished keep a settled trace of the ink. */
+/*
+ * A finished paragraph carries no ink at all — a slab of tint behind every
+ * paragraph you have read would take over the page within a minute. It simply
+ * dims, the way read text should. The stroke only lives inside the paragraph
+ * currently being read.
+ */
 .prose .block.is-read {
-  color: var(--text-read);
-  background: color-mix(in srgb, var(--anchor) 9%, transparent);
-  border-radius: 6px;
-  box-shadow: -8px 0 0 color-mix(in srgb, var(--anchor) 9%, transparent),
-    8px 0 0 color-mix(in srgb, var(--anchor) 9%, transparent);
+  color: color-mix(in srgb, var(--text-read) 58%, transparent);
 }
 
 .prose .block.is-ahead {
