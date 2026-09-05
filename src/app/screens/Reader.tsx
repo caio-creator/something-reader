@@ -75,7 +75,9 @@ export const Reader = ({
   return (
     <section className="reader" id="main">
       <header className="reader-top">
-        <Button variant="circle" icon="close" aria-label={copy.close} onClick={onClose} />
+        <div className="reader-top-lead">
+          <Button variant="circle" icon="close" aria-label={copy.close} onClick={onClose} />
+        </div>
         <span className="reader-title mono">{doc.title}</span>
         <div className="reader-top-actions">
           {doc.sections.length > 1 && (

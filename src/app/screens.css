@@ -621,19 +621,36 @@
 
 .reader-top {
   display: grid;
-  /* Equal side columns, or the title centres in the leftover space rather than
-     in the bar — one button on the left against three on the right. */
-  grid-template-columns: minmax(var(--tap), 1fr) auto minmax(var(--tap), 1fr);
+  /* The side columns must be equal or the title centres in the leftover space
+     rather than on the bar. `1fr` alone does not do that: its implicit minimum
+     is min-content, and three buttons never fit in 44px, so that column keeps a
+     larger floor than the single button opposite it and the fractions are only
+     ever shared above those floors. Flooring all three at 0 is what makes the
+     sides actually equal; the title is held back by its own max-width instead. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
   align-items: center;
   gap: var(--space-4);
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-5) 0;
+  /* The gutter is 24px everywhere else, and it is the icon's edge that has to
+     land on it, not the button's hit area — the glyph sits ~12px inside the
+     44px circle, so the bar is padded by the other 12. */
+  padding-block: max(var(--space-3), env(safe-area-inset-top)) var(--space-3);
+  padding-inline: var(--space-3);
+}
+
+.reader-top-lead {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .reader-title {
   justify-self: center;
-  max-width: 100%;
+  /* Long names truncate rather than squeeze the buttons to nothing. */
+  max-width: min(100%, 26ch);
   font-size: var(--step-eyebrow);
   letter-spacing: 0.08em;
+  /* Uppercase tracking adds a space after the last letter that belongs to no
+     glyph, which drags the block left of true centre. Take it back. */
+  margin-right: -0.08em;
   text-transform: uppercase;
   color: var(--text-3);
   text-align: center;
@@ -645,7 +662,7 @@
 .reader-top-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .focus-stage {
@@ -918,10 +935,10 @@
 
 @media (min-width: 700px) {
   .reader-top {
-    padding-top: max(var(--space-5), env(safe-area-inset-top));
-    padding-left: var(--space-6);
-    padding-right: var(--space-6);
+    padding-block: max(var(--space-4), env(safe-area-inset-top)) var(--space-4);
+    padding-inline: var(--space-5);
   }
+  .reader-title { max-width: min(100%, 44ch); }
   .text-stage { padding: var(--space-7) var(--space-5) 280px; }
 }
 
