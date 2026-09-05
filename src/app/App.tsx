@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { createEngine, type Engine, type EngineSnapshot } from "@core/engine/engine";
 import { splitOrp } from "@core/engine/orp";
 import { importBytes, ImportError, importPastedText } from "@core/importers";
 import { markdownImporter } from "@core/importers/markdown";
 import {
-  deleteDocument,
   getDocument,
   getPosition,
   listLibrary,
@@ -23,21 +22,25 @@ import { copy } from "@ui/copy";
 import { SAMPLE_MARKDOWN } from "./sample";
 
 type Item = Awaited<ReturnType<typeof listLibrary>>[number];
+type Tab = "library" | "now" | "settings";
 type Mode = "read" | "focus";
 
-const fontSizePx = { s: "18px", m: "20px", l: "22px" } as const;
+const fontSizePx = { s: "18px", m: "21px", l: "24px" } as const;
+const PACE = [180, 220, 240, 280, 300, 340, 400];
 
 export const App = () => {
+  const [tab, setTab] = useState<Tab>("now");
   const [items, setItems] = useState<Item[]>([]);
   const [doc, setDoc] = useState<SomethingDocument | null>(null);
   const [settings, setSettings] = useState<ReaderSettings>(defaultSettings);
-  const [mode, setMode] = useState<Mode>("read");
+  const [mode, setMode] = useState<Mode>("focus");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [paste, setPaste] = useState("");
   const [over, setOver] = useState(false);
   const [hint, setHint] = useState(true);
+  const [paceOpen, setPaceOpen] = useState(false);
   const [snap, setSnap] = useState<EngineSnapshot | null>(null);
   const [resume, setResume] = useState<ReadingPosition | null>(null);
   const engineRef = useRef<Engine | null>(null);
@@ -73,25 +76,28 @@ export const App = () => {
     }, 200);
   }, [refresh]);
 
+  const closeReader = useCallback(() => {
+    engineRef.current?.pause();
+    engineRef.current?.dispose();
+    engineRef.current = null;
+    setDoc(null);
+    setPaceOpen(false);
+  }, []);
+
   const openDoc = useCallback(
-    async (id: string, nextMode: Mode = "read") => {
+    async (id: string, nextMode: Mode = "focus") => {
       const found = await getDocument(id);
       if (!found) return;
       engineRef.current?.dispose();
       engineRef.current = null;
       const position = (await getPosition(id)) ?? null;
       setResume(position);
+      setHint(true);
       setDoc(found);
       setMode(nextMode);
-      if (nextMode === "focus") {
-        const engine = createEngine(found, position ?? null, settings.wpm);
-        engineRef.current = engine;
-        engine.subscribe(setSnap);
-      } else {
-        setSnap(null);
-      }
+      setTab("now");
     },
-    [settings.wpm],
+    [],
   );
 
   useEffect(() => {
@@ -117,11 +123,9 @@ export const App = () => {
         const imported = await importBytes(bytes, file.name, file.type);
         await saveDocument(imported);
         await refresh();
-        await openDoc(imported.id);
+        await openDoc(imported.id, "focus");
       } catch (err) {
-        const message =
-          err instanceof ImportError ? err.message : "Could not import that.";
-        setError(message);
+        setError(err instanceof ImportError ? err.message : "Could not import that.");
       } finally {
         setBusy(false);
       }
@@ -137,7 +141,7 @@ export const App = () => {
         const imported = await importPastedText(text, title);
         await saveDocument(imported);
         await refresh();
-        await openDoc(imported.id);
+        await openDoc(imported.id, "focus");
         setPaste("");
         setPasteOpen(false);
       } catch (err) {
@@ -156,304 +160,387 @@ export const App = () => {
       const imported = await markdownImporter.importFile(encoded.buffer, "sample.md");
       await saveDocument(imported);
       await refresh();
-      await openDoc(imported.id);
+      await openDoc(imported.id, "focus");
     } finally {
       setBusy(false);
     }
   }, [openDoc, refresh]);
 
-  const onKey = useCallback(
-    (e: KeyboardEvent) => {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
-      if (e.key === "Escape") {
-        engineRef.current?.pause();
-        setDoc(null);
-      }
+      if (e.key === "Escape") closeReader();
       if (!doc) return;
       if (e.key === " ") {
         e.preventDefault();
         if (mode === "focus") engineRef.current?.toggle();
         else setMode("focus");
       }
-      if (e.key === "f") setMode((m) => (m === "focus" ? "read" : "focus"));
       if (mode === "focus") {
         if (e.key === "ArrowRight" || e.key === "j") engineRef.current?.step(1);
         if (e.key === "ArrowLeft" || e.key === "k") engineRef.current?.step(-1);
       }
-    },
-    [doc, mode],
-  );
-
-  useEffect(() => {
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onKey]);
+  }, [closeReader, doc, mode]);
 
   const progressLabel = useMemo(() => {
     if (!snap) return "";
-    return `${Math.round(snap.progress * 100)}% · ${snap.wpm} wpm`;
+    return `${Math.round(snap.progress * 100)}%`;
   }, [snap]);
 
+  const reading = Boolean(doc);
+
   return (
-    <div className="app">
+    <div
+      className={`app ${reading ? "is-reading" : ""}`}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const file = e.dataTransfer.files[0];
+        if (file) void ingest(file);
+      }}
+    >
       <a className="skip" href="#main">
         Skip to reading
       </a>
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="mark">
-            something<span>.</span>
-          </div>
-          <p className="tagline">{copy.tagline}</p>
-        </div>
 
-        <div
-          className={`drop ${over ? "over" : ""}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setOver(true);
-          }}
-          onDragLeave={() => setOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setOver(false);
-            const file = e.dataTransfer.files[0];
-            if (file) void ingest(file);
-          }}
-        >
-          <p className="sheet-label">{busy ? copy.adding : copy.importLabel}</p>
-          <div className="import-rows">
-            <button type="button" className="row" disabled={busy} onClick={() => setPasteOpen((v) => !v)}>
-              {copy.paste}
-            </button>
-            <button type="button" className="row" disabled={busy} onClick={() => fileRef.current?.click()}>
-              {copy.openFile}
-            </button>
-          </div>
-          <p className="or">{copy.or}</p>
-          <button type="button" className="row sample" disabled={busy} onClick={() => void loadSample()}>
-            {copy.sample}
-          </button>
-          <p className="hint">{over ? copy.drop : copy.hint}</p>
-          <input
-            ref={fileRef}
-            hidden
-            type="file"
-            accept=".epub,.pdf,.md,.markdown,.txt,text/plain,application/pdf,application/epub+zip"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void ingest(file);
-              e.target.value = "";
-            }}
-          />
-          {pasteOpen && (
-            <>
-              <textarea
-                className="paste"
-                placeholder="Paste something."
-                value={paste}
-                onChange={(e) => setPaste(e.target.value)}
-              />
-              <button type="button" className="primary" onClick={() => void ingestText(paste)}>
-                {copy.read}
-              </button>
-            </>
-          )}
-          {error && (
-            <p className="banner" role="alert" aria-live="assertive">
-              {error}
-            </p>
-          )}
-        </div>
+      {!reading && tab === "now" && (
+        <NowScreen
+          busy={busy}
+          error={error}
+          over={over}
+          pasteOpen={pasteOpen}
+          paste={paste}
+          fileRef={fileRef}
+          onPasteToggle={() => setPasteOpen((v) => !v)}
+          onPasteChange={setPaste}
+          onPasteSubmit={() => void ingestText(paste)}
+          onOpenFile={() => fileRef.current?.click()}
+          onSample={() => void loadSample()}
+          onFile={(file) => void ingest(file)}
+        />
+      )}
 
-        <div>
-          <div className="things-head">
-            <h2>{copy.things}</h2>
-          </div>
-          {items.length === 0 ? (
-            <p className="hint" style={{ margin: "0 12px" }}>
-              {copy.emptyTitle} {copy.emptyBody}
-            </p>
+      {!reading && tab === "library" && (
+        <LibraryScreen items={items} onOpen={(id) => void openDoc(id, "focus")} />
+      )}
+
+      {!reading && tab === "settings" && (
+        <SettingsScreen settings={settings} onChange={setSettings} />
+      )}
+
+      {doc && (
+        <section className="reader-stage" id="main">
+          <header className="reader-top">
+            <button type="button" className="circle" aria-label={copy.close} onClick={closeReader}>
+              ×
+            </button>
+            <button type="button" className="circle" aria-label={copy.pace} onClick={() => setPaceOpen(true)}>
+              ⌁
+            </button>
+          </header>
+
+          {mode === "focus" ? (
+            <FocusView
+              snap={snap}
+              hint={hint}
+              onDismissHint={() => setHint(false)}
+              onToggle={() => {
+                setHint(false);
+                engineRef.current?.toggle();
+              }}
+            />
           ) : (
-            <ul className="things">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className={`item ${doc?.id === item.id ? "active" : ""}`}
-                    onClick={() => void openDoc(item.id)}
-                  >
-                    <span className="title">{item.title}</span>
-                    <span className="meta">
-                      {item.progress >= 0.97
-                        ? copy.finished
-                        : item.progress > 0.02
-                          ? copy.continue
-                          : `${item.sourceType} · ${item.wordCount.toLocaleString()} words`}
-                    </span>
-                    <span className="progress">
-                      <span style={{ width: `${Math.round(item.progress * 100)}%` }} />
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <ReadView
+              doc={doc}
+              activeBlockId={resume?.blockId}
+              onPosition={(blockId, sectionId) =>
+                persistPosition({
+                  documentId: doc.id,
+                  sectionId,
+                  blockId,
+                  tokenIndex: resume?.tokenIndex ?? 0,
+                  updatedAt: Date.now(),
+                })
+              }
+              onJump={() => setMode("focus")}
+            />
           )}
-        </div>
-      </aside>
 
-      <main className="main" id="main">
-        {doc ? (
-          <>
-            <header className="topbar">
-              <button
-                type="button"
-                className="plain icon-btn"
-                aria-label={copy.close}
-                onClick={() => {
-                  engineRef.current?.pause();
-                  setDoc(null);
-                }}
-              >
-                {copy.close}
-              </button>
-              <h1>{doc.title}</h1>
-              <div className="controls">
-                <div className="segmented" role="tablist" aria-label="Reading mode">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={mode === "read"}
-                    onClick={() => setMode("read")}
-                  >
-                    {copy.read}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={mode === "focus"}
-                    onClick={() => setMode("focus")}
-                  >
-                    {copy.focus}
-                  </button>
-                </div>
-                <label className="status">
-                  {copy.wpm}{" "}
-                  <input
-                    type="range"
-                    min={120}
-                    max={500}
-                    step={10}
-                    value={settings.wpm}
-                    aria-label="Words per minute"
-                    onChange={(e) => {
-                      const wpm = Number(e.target.value);
-                      setSettings((s) => ({ ...s, wpm }));
-                      engineRef.current?.setWpm(wpm);
-                    }}
-                  />{" "}
-                  {settings.wpm}
-                </label>
-                <button
-                  type="button"
-                  className="plain"
-                  onClick={() => setSettings((s) => ({ ...s, theme: s.theme === "ink" ? "paper" : "ink" }))}
-                >
-                  {settings.theme === "ink" ? copy.themePaper : copy.themeInk}
+          {mode === "focus" && snap && (
+            <div className="player">
+              <div className="scrub">
+                <span>0%</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={Math.max(0, snap.length - 1)}
+                  value={snap.index}
+                  aria-label="Position"
+                  onChange={(e) => engineRef.current?.seek(Number(e.target.value))}
+                />
+                <span>{progressLabel}</span>
+              </div>
+              <div className="player-actions">
+                <button type="button" className="player-btn" onClick={() => setMode("read")}>
+                  {copy.explorer}
                 </button>
-                <button
-                  type="button"
-                  className="plain"
-                  aria-label="Text size"
-                  onClick={() =>
-                    setSettings((s) => ({
-                      ...s,
-                      fontSize: s.fontSize === "s" ? "m" : s.fontSize === "m" ? "l" : "s",
-                    }))
-                  }
-                >
-                  {settings.fontSize.toUpperCase()}
-                </button>
-                <button
-                  type="button"
-                  className="danger"
-                  onClick={() => {
-                    if (!window.confirm(`Remove “${doc.title}”?`)) return;
-                    const id = doc.id;
-                    engineRef.current?.dispose();
-                    setDoc(null);
-                    void deleteDocument(id).then(refresh);
-                  }}
-                >
-                  {copy.remove}
+                <button type="button" className="player-btn play" onClick={() => engineRef.current?.toggle()}>
+                  {snap.playing ? copy.pause : copy.play}
                 </button>
               </div>
-            </header>
-            {mode === "read" ? (
-              <ReadView
-                doc={doc}
-                activeBlockId={resume?.blockId}
-                onPosition={(blockId, sectionId) =>
-                  persistPosition({
-                    documentId: doc.id,
-                    sectionId,
-                    blockId,
-                    tokenIndex: resume?.tokenIndex ?? 0,
-                    updatedAt: Date.now(),
-                  })
-                }
-              />
-            ) : (
-              <FocusView
-                snap={snap}
-                hint={hint}
-                onDismissHint={() => setHint(false)}
-                onToggle={() => {
-                  setHint(false);
-                  engineRef.current?.toggle();
-                }}
-                onSeek={(value) => engineRef.current?.seek(value)}
-              />
-            )}
-            {mode === "read" && (
-              <div className="dock">
-                <div className="dock-inner">
-                  <button className="primary" type="button" onClick={() => setMode("focus")}>
-                    {copy.focusHere}
+            </div>
+          )}
+
+          {paceOpen && (
+            <div className="sheet" role="dialog" aria-label={copy.pace}>
+              <div className="sheet-card">
+                <header>
+                  <button type="button" className="circle" onClick={() => setPaceOpen(false)}>
+                    ×
                   </button>
-                </div>
+                  <h2>{copy.pace}</h2>
+                </header>
+                <ul className="pace-list">
+                  {PACE.map((n) => (
+                    <li key={n}>
+                      <button
+                        type="button"
+                        className={settings.wpm === n ? "on" : ""}
+                        onClick={() => {
+                          setSettings((s) => ({ ...s, wpm: n }));
+                          engineRef.current?.setWpm(n);
+                          setPaceOpen(false);
+                        }}
+                      >
+                        {n} WPM
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
-            {mode === "focus" && snap && (
-              <div className="dock">
-                <div className="dock-inner wide">
-                  <input
-                    type="range"
-                    min={0}
-                    max={Math.max(0, snap.length - 1)}
-                    value={snap.index}
-                    aria-label="Position"
-                    onChange={(e) => engineRef.current?.seek(Number(e.target.value))}
-                  />
-                  <span className="status">{progressLabel}</span>
-                  <button type="button" className="plain" onClick={() => setMode("read")}>
-                    {copy.explorer}
-                  </button>
-                  <button className="primary" type="button" onClick={() => engineRef.current?.toggle()}>
-                    {snap.playing ? copy.pause : copy.play}
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="empty">
-            <h1>{items.length === 0 ? copy.emptyTitle : copy.tagline}</h1>
-            <p>{items.length === 0 ? copy.emptyBody : copy.finish}</p>
-          </div>
-        )}
-      </main>
+            </div>
+          )}
+        </section>
+      )}
+
+      {!reading && (
+        <nav className="tabbar" aria-label="App">
+          <button type="button" aria-current={tab === "library"} onClick={() => setTab("library")}>
+            <span className="glyph">▢</span>
+            {copy.things}
+          </button>
+          <button type="button" aria-current={tab === "now"} onClick={() => setTab("now")}>
+            <span className="glyph">⚡</span>
+            {copy.now}
+          </button>
+          <button type="button" aria-current={tab === "settings"} onClick={() => setTab("settings")}>
+            <span className="glyph">⚙</span>
+            {copy.settings}
+          </button>
+        </nav>
+      )}
     </div>
+  );
+};
+
+const NowScreen = ({
+  busy,
+  error,
+  over,
+  pasteOpen,
+  paste,
+  fileRef,
+  onPasteToggle,
+  onPasteChange,
+  onPasteSubmit,
+  onOpenFile,
+  onSample,
+  onFile,
+}: {
+  busy: boolean;
+  error: string | null;
+  over: boolean;
+  pasteOpen: boolean;
+  paste: string;
+  fileRef: RefObject<HTMLInputElement | null>;
+  onPasteToggle: () => void;
+  onPasteChange: (v: string) => void;
+  onPasteSubmit: () => void;
+  onOpenFile: () => void;
+  onSample: () => void;
+  onFile: (file: File) => void;
+}) => {
+  const mark = splitOrp("something");
+  return (
+    <main className="now" id="main">
+      <div className="stage-mark">
+        <div className="guides home">
+          <div className="focus-word brand-word">
+            <span className="before">{mark.before}</span>
+            <span className="pivot">{mark.pivot}</span>
+            <span className="after">{mark.after}.</span>
+          </div>
+        </div>
+      </div>
+      <div className={`import-card ${over ? "over" : ""}`}>
+        <p className="sheet-label">{busy ? copy.adding : copy.importLabel}</p>
+        <button type="button" className="row" disabled={busy} onClick={onPasteToggle}>
+          {copy.paste}
+        </button>
+        <button type="button" className="row" disabled={busy} onClick={onOpenFile}>
+          {copy.openFile}
+        </button>
+        <p className="or">{copy.or}</p>
+        <button type="button" className="row sample" disabled={busy} onClick={onSample}>
+          {copy.sample}
+        </button>
+        {pasteOpen && (
+          <>
+            <textarea
+              className="paste"
+              placeholder="Paste something."
+              value={paste}
+              onChange={(e) => onPasteChange(e.target.value)}
+            />
+            <button type="button" className="primary" onClick={onPasteSubmit}>
+              {copy.read}
+            </button>
+          </>
+        )}
+        {error && (
+          <p className="banner" role="alert">
+            {error}
+          </p>
+        )}
+        <p className="hint">{over ? copy.drop : copy.hint}</p>
+      </div>
+      <input
+        ref={fileRef}
+        hidden
+        type="file"
+        accept=".epub,.pdf,.md,.markdown,.txt,text/plain,application/pdf,application/epub+zip"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+          e.target.value = "";
+        }}
+      />
+    </main>
+  );
+};
+
+const LibraryScreen = ({
+  items,
+  onOpen,
+}: {
+  items: Item[];
+  onOpen: (id: string) => void;
+}) => (
+  <main className="library" id="main">
+    <h1>{copy.saved}</h1>
+    {items.length === 0 ? (
+      <p className="empty-line">{copy.emptyTitle} {copy.emptyBody}</p>
+    ) : (
+      <ul className="saved">
+        {items.map((item) => (
+          <li key={item.id}>
+            <button type="button" onClick={() => onOpen(item.id)}>
+              <span className={`dot ${item.progress >= 0.97 ? "done" : item.progress > 0.02 ? "mid" : ""}`} />
+              <span className="copy">
+                <span className="title">{item.title}</span>
+                <span className="meta">
+                  {item.progress >= 0.97
+                    ? copy.finished
+                    : item.progress > 0.02
+                      ? copy.continue
+                      : `${item.sourceType} · ${item.wordCount.toLocaleString()} words`}
+                </span>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+);
+
+const SettingsScreen = ({
+  settings,
+  onChange,
+}: {
+  settings: ReaderSettings;
+  onChange: (next: ReaderSettings) => void;
+}) => {
+  const mark = splitOrp("something");
+  return (
+    <main className="settings" id="main">
+      <h1>{copy.look}</h1>
+      <div className="preview-card">
+        <p className="sheet-label">{copy.preview}</p>
+        <div className="guides home">
+          <div className="focus-word brand-word">
+            <span className="before">{mark.before}</span>
+            <span className="pivot">{mark.pivot}</span>
+            <span className="after">{mark.after}.</span>
+          </div>
+        </div>
+      </div>
+      <section className="group">
+        <h2>{copy.background}</h2>
+        <div className="segmented full">
+          <button
+            type="button"
+            aria-selected={settings.theme === "ink"}
+            onClick={() => onChange({ ...settings, theme: "ink" })}
+          >
+            {copy.themeInk}
+          </button>
+          <button
+            type="button"
+            aria-selected={settings.theme === "paper"}
+            onClick={() => onChange({ ...settings, theme: "paper" })}
+          >
+            {copy.themePaper}
+          </button>
+        </div>
+      </section>
+      <section className="group">
+        <h2>{copy.textSize}</h2>
+        <div className="segmented full">
+          {(["s", "m", "l"] as const).map((size) => (
+            <button
+              key={size}
+              type="button"
+              aria-selected={settings.fontSize === size}
+              onClick={() => onChange({ ...settings, fontSize: size })}
+            >
+              {size.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="group">
+        <h2>{copy.pace}</h2>
+        <p className="hint">{settings.wpm} WPM</p>
+        <input
+          type="range"
+          min={120}
+          max={500}
+          step={10}
+          value={settings.wpm}
+          aria-label={copy.pace}
+          onChange={(e) => onChange({ ...settings, wpm: Number(e.target.value) })}
+        />
+      </section>
+    </main>
   );
 };
 
@@ -461,10 +548,12 @@ const ReadView = ({
   doc,
   activeBlockId,
   onPosition,
+  onJump,
 }: {
   doc: SomethingDocument;
   activeBlockId?: string;
   onPosition: (blockId: string, sectionId: string) => void;
+  onJump: () => void;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const onPositionRef = useRef(onPosition);
@@ -479,9 +568,10 @@ const ReadView = ({
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!visible) return;
-        const blockId = (visible.target as HTMLElement).dataset.block;
-        const sectionId = (visible.target as HTMLElement).dataset.section;
-        if (blockId && sectionId) onPositionRef.current(blockId, sectionId);
+        const el = visible.target as HTMLElement;
+        if (el.dataset.block && el.dataset.section) {
+          onPositionRef.current(el.dataset.block, el.dataset.section);
+        }
       },
       { root, threshold: 0.4 },
     );
@@ -490,44 +580,46 @@ const ReadView = ({
   }, [doc.id]);
   const restoredFor = useRef<string | null>(null);
   useEffect(() => {
-    if (!activeBlockId) return;
-    if (restoredFor.current === doc.id) return;
+    if (!activeBlockId || restoredFor.current === doc.id) return;
     restoredFor.current = doc.id;
-    const current = ref.current?.querySelector(`[data-block="${activeBlockId}"]`);
-    current?.scrollIntoView({ block: "center" });
+    ref.current?.querySelector(`[data-block="${activeBlockId}"]`)?.scrollIntoView({ block: "center" });
   }, [doc.id, activeBlockId]);
 
   return (
-    <div className="reader" ref={ref}>
+    <div className="explorer" ref={ref}>
+      <header className="explorer-head">
+        <h2>{copy.explorer}</h2>
+      </header>
       <article className="article">
         {doc.sections.map((section) => (
           <section key={section.id}>
             {section.blocks.map((b) => {
-              const active = b.id === activeBlockId;
+              const cls = b.id === activeBlockId ? "block active" : "block";
+              const props = { "data-block": b.id, "data-section": section.id, className: cls };
               if (b.kind === "heading") {
                 const Tag = (b.level && b.level <= 3 ? `h${Math.min(3, Math.max(2, b.level))}` : "h2") as "h2" | "h3";
                 return (
-                  <Tag key={b.id} data-block={b.id} data-section={section.id} className={active ? "block active" : "block"}>
+                  <Tag key={b.id} {...props}>
                     {b.text}
                   </Tag>
                 );
               }
               if (b.kind === "quote") {
                 return (
-                  <blockquote key={b.id} data-block={b.id} data-section={section.id} className={active ? "block active" : "block"}>
+                  <blockquote key={b.id} {...props}>
                     {b.text}
                   </blockquote>
                 );
               }
               if (b.kind === "code") {
                 return (
-                  <pre key={b.id} data-block={b.id} data-section={section.id} className={active ? "block active" : "block"}>
+                  <pre key={b.id} {...props}>
                     {b.text}
                   </pre>
                 );
               }
               return (
-                <p key={b.id} data-block={b.id} data-section={section.id} className={active ? "block active" : "block"}>
+                <p key={b.id} {...props}>
                   {b.text}
                 </p>
               );
@@ -535,6 +627,11 @@ const ReadView = ({
           </section>
         ))}
       </article>
+      <div className="explorer-jump">
+        <button type="button" className="primary" onClick={onJump}>
+          {copy.focusHere}
+        </button>
+      </div>
     </div>
   );
 };
@@ -549,10 +646,9 @@ const FocusView = ({
   hint: boolean;
   onDismissHint: () => void;
   onToggle: () => void;
-  onSeek: (index: number) => void;
 }) => {
-  const word = snap?.token?.text ?? "";
-  const parts = splitOrp(word || "·");
+  const word = snap?.token?.text ?? "A";
+  const parts = splitOrp(word);
   return (
     <div className="focus" onClick={onToggle}>
       {hint && (
