@@ -29,16 +29,32 @@ type Part = Stroke | Filled | Glyph;
 const isGlyph = (part: Part): part is Glyph => "text" in part;
 
 const ICONS: Record<IconName, Part[]> = {
-  // Books on a shelf. An empty tray said nothing; a shelf says library.
+  /*
+   * A stack of things, not a shelf of books — this library holds PDFs,
+   * articles and pasted paragraphs as readily as it holds a novel, and a book
+   * spine would be a promise the product does not make.
+   */
   things: [
-    { d: "M4 20.4h16" },
-    { d: "M6.6 20.4V9.2a1.2 1.2 0 0 1 1.2-1.2h1.6a1.2 1.2 0 0 1 1.2 1.2v11.2" },
-    { d: "M13 20.4V5.6a1.2 1.2 0 0 1 1.2-1.2h1.6a1.2 1.2 0 0 1 1.2 1.2v14.8" },
+    { d: "M8.2 7.6V6.2a2 2 0 0 1 2-2h7.6a2 2 0 0 1 2 2v7.6a2 2 0 0 1-2 2h-1.4" },
+    { d: "M6.2 8.6h7.6a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2z" },
   ],
-  bolt: [{ d: "M13.4 3 5.6 13.2h5.2L10.2 21l7.8-10.2h-5z" }],
+  /*
+   * The reader's own mark: a word held between two rails. A lightning bolt
+   * means "fast" in every app ever shipped and nothing about this one; the
+   * rails are literally what focus mode draws.
+   */
+  bolt: [
+    { d: "M2.8 8.2h18.4M2.8 15.8h18.4" },
+    { d: "M9.4 11.05h5.2a.95.95 0 0 1 0 1.9H9.4a.95.95 0 0 1 0-1.9z", fill: true },
+  ],
+  /*
+   * Faders, not a gear. Almost everything behind this tab is an adjustment to
+   * how text looks and moves; a cog is the most borrowed glyph in software and
+   * says only "options exist".
+   */
   settings: [
-    { d: "M10.7 3.9a1.35 1.35 0 0 1 1.34-1.15h0a1.35 1.35 0 0 1 1.34 1.15l.16 1.06c.5.15.98.35 1.42.6l.86-.63a1.35 1.35 0 0 1 1.75.14l.62.62a1.35 1.35 0 0 1 .14 1.75l-.63.86c.25.44.45.92.6 1.42l1.06.16a1.35 1.35 0 0 1 1.15 1.34v.88a1.35 1.35 0 0 1-1.15 1.34l-1.06.16c-.15.5-.35.98-.6 1.42l.63.86a1.35 1.35 0 0 1-.14 1.75l-.62.62a1.35 1.35 0 0 1-1.75.14l-.86-.63c-.44.25-.92.45-1.42.6l-.16 1.06a1.35 1.35 0 0 1-1.34 1.15h-.88a1.35 1.35 0 0 1-1.34-1.15l-.16-1.06a7.3 7.3 0 0 1-1.42-.6l-.86.63a1.35 1.35 0 0 1-1.75-.14l-.62-.62a1.35 1.35 0 0 1-.14-1.75l.63-.86a7.3 7.3 0 0 1-.6-1.42l-1.06-.16A1.35 1.35 0 0 1 2.75 12.9v-.88a1.35 1.35 0 0 1 1.15-1.34l1.06-.16c.15-.5.35-.98.6-1.42l-.63-.86a1.35 1.35 0 0 1 .14-1.75l.62-.62a1.35 1.35 0 0 1 1.75-.14l.86.63c.44-.25.92-.45 1.42-.6z" },
-    { d: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" },
+    { d: "M3.6 7.4h16.8M3.6 12h16.8M3.6 16.6h16.8" },
+    { d: "M9.2 9.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM15.6 13.8a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM7.4 18.4a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z" },
   ],
   close: [{ d: "M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2" }],
   // A real dial: swept arc, needle, hub.
@@ -87,11 +103,10 @@ const ICONS: Record<IconName, Part[]> = {
     { d: "M12 20.6a8.6 8.6 0 1 1 0-17.2c4.75 0 8.6 3.42 8.6 7.64 0 2.1-1.72 3.82-3.82 3.82h-1.43a1.67 1.67 0 0 0-1.18 2.86A1.67 1.67 0 0 1 12 20.6z" },
     { d: "M7.9 12.4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM10.4 8.6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM14.6 8.6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z", fill: true },
   ],
-  // Our actual guides: two rails with a word held between them.
+  // The rails again, but marking the guide ticks rather than the word.
   guides: [
     { d: "M2.8 8.2h18.4M2.8 15.8h18.4" },
-    // A word held between the rails, solid so it never reads as a third line.
-    { d: "M9.4 11.1h5.2a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8z", fill: true },
+    { d: "M12 5.4v2.8M12 15.8v2.8" },
   ],
   shield: [{ d: "M12 3.4l7 2.75v5.1c0 4.1-2.84 7.45-7 8.85-4.16-1.4-7-4.75-7-8.85v-5.1z" }],
   // A true half-fill, which the stroked version never managed.
@@ -145,17 +160,16 @@ const ICONS: Record<IconName, Part[]> = {
   ],
 
   "things-solid": [
-    { d: "M6.3 9.1a1.5 1.5 0 0 1 1.5-1.5h1.9a1.5 1.5 0 0 1 1.5 1.5v10.2H6.3z", fill: true },
-    { d: "M12.7 5.5A1.5 1.5 0 0 1 14.2 4h1.9a1.5 1.5 0 0 1 1.5 1.5v13.8h-4.9z", fill: true },
-    { d: "M4 19.3h16a1.05 1.05 0 0 1 0 2.1H4a1.05 1.05 0 0 1 0-2.1z", fill: true },
+    { d: "M8.2 7.6V6.2a2 2 0 0 1 2-2h7.6a2 2 0 0 1 2 2v7.6a2 2 0 0 1-2 2h-1.4V10.6a2 2 0 0 0-2-2z", fill: true },
+    { d: "M6.2 8.6h7.6a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2z", fill: true },
   ],
-  "bolt-solid": [{ d: "M13.9 2.6 5.2 13.4a.7.7 0 0 0 .54 1.14h4.32l-.72 6.86a.7.7 0 0 0 1.24.52l8.7-10.8a.7.7 0 0 0-.54-1.14h-4.32l.72-6.86a.7.7 0 0 0-1.24-.52z", fill: true }],
+  "bolt-solid": [
+    { d: "M2.8 7.35h18.4a.95.95 0 0 1 0 1.9H2.8a.95.95 0 0 1 0-1.9zM2.8 14.75h18.4a.95.95 0 0 1 0 1.9H2.8a.95.95 0 0 1 0-1.9z", fill: true },
+    { d: "M8.8 10.6h6.4a1.4 1.4 0 0 1 0 2.8H8.8a1.4 1.4 0 0 1 0-2.8z", fill: true },
+  ],
   "settings-solid": [
-    {
-      d: "M10.6 3.75a1.45 1.45 0 0 1 1.44-1.25h0a1.45 1.45 0 0 1 1.44 1.25l.17 1.14c.55.16 1.07.38 1.55.65l.93-.68a1.45 1.45 0 0 1 1.88.15l.62.62a1.45 1.45 0 0 1 .15 1.88l-.68.93c.27.48.49 1 .65 1.55l1.14.17A1.45 1.45 0 0 1 21.14 11.6v.8a1.45 1.45 0 0 1-1.25 1.44l-1.14.17c-.16.55-.38 1.07-.65 1.55l.68.93a1.45 1.45 0 0 1-.15 1.88l-.62.62a1.45 1.45 0 0 1-1.88.15l-.93-.68c-.48.27-1 .49-1.55.65l-.17 1.14a1.45 1.45 0 0 1-1.44 1.25h-.8a1.45 1.45 0 0 1-1.44-1.25l-.17-1.14a7.85 7.85 0 0 1-1.55-.65l-.93.68a1.45 1.45 0 0 1-1.88-.15l-.62-.62a1.45 1.45 0 0 1-.15-1.88l.68-.93a7.85 7.85 0 0 1-.65-1.55l-1.14-.17A1.45 1.45 0 0 1 2.36 12.4v-.8a1.45 1.45 0 0 1 1.25-1.44l1.14-.17c.16-.55.38-1.07.65-1.55l-.68-.93a1.45 1.45 0 0 1 .15-1.88l.62-.62a1.45 1.45 0 0 1 1.88-.15l.93.68c.48-.27 1-.49 1.55-.65zM12 15.4a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8z",
-      fill: true,
-      evenOdd: true,
-    },
+    { d: "M3.6 6.4h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2zM3.6 11h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2zM3.6 15.6h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2z", fill: true },
+    { d: "M9.2 9.8a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM15.6 14.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM7.4 19a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8z", fill: true },
   ],
 };
 

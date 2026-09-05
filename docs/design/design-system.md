@@ -74,6 +74,13 @@ optical padding. Two rules:
 - **Letterforms are set, never drawn.** A hand-plotted "A" reads as a mistake
   beside real type, so glyph icons render `<text>` in the app's own faces —
   Inter for weight and size, Literata for the typeface picker.
+- **An icon means something about this product, or it does not ship.** A
+  lightning bolt means "fast" in every app ever released and nothing about this
+  one; a cog says only that options exist. Read now is drawn as the rails with
+  a word held between them — literally what focus mode puts on screen. Things
+  is a stack, not a book spine, because this library holds PDFs and pasted
+  paragraphs as readily as novels. Settings is a set of faders, because almost
+  everything behind it adjusts how text looks and moves.
 - **One job, one icon.** Three separate letter icons for text size, text weight
   and reader appearance were the same drawing three times. There is now one of
   each.
