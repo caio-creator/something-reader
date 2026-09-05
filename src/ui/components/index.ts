@@ -3,6 +3,7 @@ export { Button } from "./Button";
 export { EmptyState } from "./EmptyState";
 export { FocusWord } from "./FocusWord";
 export { Icon, type IconName } from "./Icon";
+export { Typing } from "./Typing";
 export { Menu, type MenuItem } from "./Menu";
 export { Ring } from "./Ring";
 export { Segmented, type Option } from "./Segmented";

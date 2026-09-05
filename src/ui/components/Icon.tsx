@@ -11,7 +11,7 @@
  */
 
 export type IconName =
-  | "things" | "bolt" | "settings" | "close" | "gauge" | "play" | "pause"
+  | "things" | "bolt" | "settings" | "close" | "gauge" | "play" | "pause" | "stop"
   | "text" | "link" | "paste" | "file" | "search" | "trash" | "back"
   | "forward" | "check" | "weight" | "palette" | "guides" | "shield"
   | "contrast" | "anchor" | "textsize" | "font" | "chunk" | "presets"
@@ -65,6 +65,9 @@ const ICONS: Record<IconName, Part[]> = {
   ],
   play: [{ d: "M8.6 5.8v12.4L18.2 12z", fill: true }],
   pause: [{ d: "M9.4 5.8v12.4M14.6 5.8v12.4" }],
+  /* Solid, like play: two hairlines at this size read as a pause, a hairline
+     square reads as an empty box. */
+  stop: [{ d: "M6.6 7.4a.8.8 0 0 1 .8-.8h9.2a.8.8 0 0 1 .8.8v9.2a.8.8 0 0 1-.8.8H7.4a.8.8 0 0 1-.8-.8z", fill: true }],
   text: [{ d: "M4 6.6h16M4 12h16M4 17.4h10.5" }],
   link: [
     { d: "M10.6 13.4a3.8 3.8 0 0 0 5.4 0l2.6-2.6a3.8 3.8 0 1 0-5.4-5.4l-1.3 1.3" },

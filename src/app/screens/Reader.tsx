@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Engine, EngineSnapshot } from "@core/engine/engine";
 import type { Block, Section, SomethingDocument } from "@core/model/types";
-import { Button, FocusWord, Icon, Sheet, Slider, WheelPicker } from "@ui/components";
+import { Button, FocusWord, Icon, Sheet, Slider, Typing, WheelPicker } from "@ui/components";
 import { copy } from "@ui/copy";
 import { useSettings } from "../providers/settings-context";
 import { estimateMs, timecode, timeLeft } from "../format";
@@ -106,8 +106,23 @@ export const Reader = ({
 
       {snapshot && (
         <div className="dock">
-          <div className="dock-scrub">
-            <span className="mono">{timecode(snapshot.elapsedMs)}</span>
+          <p className="dock-status mono">
+            {snapshot.playing ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.text}
+          </p>
+          <div className="dock-controls">
+            <Button
+              variant="circle"
+              icon={mode === "focus" ? "text" : "bolt"}
+              aria-label={mode === "focus" ? copy.text : copy.focus}
+              onClick={() => setMode(mode === "focus" ? "text" : "focus")}
+            />
+            <Button
+              variant="circle"
+              className="is-primary is-lead"
+              icon={snapshot.playing ? "stop" : "play"}
+              aria-label={snapshot.playing ? copy.stop : snapshot.finished ? copy.restart : copy.play}
+              onClick={toggle}
+            />
             <Slider
               label="Position"
               min={0}
@@ -116,18 +131,10 @@ export const Reader = ({
               valueText={`${Math.round(snapshot.progress * 100)} percent`}
               onChange={(index) => engine.current?.seek(index)}
             />
-            <span className="mono">{timecode(snapshot.remainingMs)}</span>
-          </div>
-          <div className="dock-actions">
-            <Button
-              icon={mode === "focus" ? "text" : "bolt"}
-              onClick={() => setMode(mode === "focus" ? "text" : "focus")}
-            >
-              {mode === "focus" ? copy.text : copy.focus}
-            </Button>
-            <Button variant="primary" icon={snapshot.playing ? "pause" : "play"} onClick={toggle}>
-              {snapshot.playing ? copy.pause : snapshot.finished ? copy.restart : copy.play}
-            </Button>
+            <div className="dock-times">
+              <span className="mono">{timecode(snapshot.elapsedMs)}</span>
+              <span className="mono">{timecode(snapshot.elapsedMs + snapshot.remainingMs)}</span>
+            </div>
           </div>
           <footer className="card-foot">
             <span className="mono">{timeLeft(snapshot.remainingMs)}</span>

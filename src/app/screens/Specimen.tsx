@@ -8,8 +8,10 @@ import {
   Segmented,
   Slider,
   Swatches,
+  Typing,
   type IconName,
 } from "@ui/components";
+import { copy } from "@ui/copy";
 import { ANCHOR_COLORS } from "@core/model/types";
 
 /**
@@ -22,7 +24,7 @@ import { ANCHOR_COLORS } from "@core/model/types";
  */
 
 const ICONS: IconName[] = [
-  "things", "bolt", "settings", "close", "gauge", "play", "pause", "text",
+  "things", "bolt", "settings", "close", "gauge", "play", "pause", "stop", "text",
   "link", "paste", "file", "search", "trash", "back", "forward", "check",
   "weight", "palette", "guides", "shield", "contrast", "anchor", "textsize",
   "font", "chunk", "presets", "contents", "keyboard", "chevron", "database",
@@ -173,6 +175,17 @@ export const Specimen = () => {
               <Button variant="circle" icon="textsize" aria-label="Look" />
               <Button variant="circle" icon="gauge" aria-label="Pace" />
             </div>
+          </Cell>
+          <Cell label="circle transport">
+            <div className="spec-row">
+              <Button variant="circle" icon="text" aria-label="Text" />
+              <Button variant="circle" className="is-primary is-lead" icon="play" aria-label="Read" />
+              <Button variant="circle" className="is-primary is-lead" icon="stop" aria-label="Stop" />
+              <Button variant="circle" className="is-primary is-lead" icon="play" aria-label="Read" disabled />
+            </div>
+          </Cell>
+          <Cell label="typing">
+            <span className="mono"><Typing text={copy.readingNow} /></span>
           </Cell>
         </div>
       </Block>

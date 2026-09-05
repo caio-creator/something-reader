@@ -801,21 +801,45 @@
   }
 }
 
-.dock-scrub {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--space-4);
+/*
+ * The transport buttons carry no text, so the state has to be said somewhere.
+ * Stopped, this line names the mode the reader is in; running, it types.
+ * It holds its height either way so the dock does not jump on play.
+ */
+.dock-status {
+  min-height: 16px;
   padding: 0 var(--space-2);
   font-size: var(--step-eyebrow);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: lowercase;
   color: var(--text-3);
 }
 
-.dock-actions {
+/*
+ * Two round buttons and the slider share one line; the timecodes sit under the
+ * slider only, which is the whole saving — a full-width row of labelled
+ * buttons was spending a band of the dock to say what two glyphs say.
+ */
+.dock-controls {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-  margin-top: var(--space-4);
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-2);
+}
+
+.dock-controls .slider-root {
+  grid-column: 3;
+}
+
+.dock-times {
+  grid-column: 3;
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--step-eyebrow);
+  color: var(--text-3);
 }
 
 @media (prefers-reduced-transparency: reduce) {

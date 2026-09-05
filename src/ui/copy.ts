@@ -46,8 +46,12 @@ export const copy = {
   close: "Close",
   pace: "Pace",
   paceTitle: "Your pace",
-  play: "Play",
+  play: "Read",
   pause: "Pause",
+  stop: "Stop",
+  /* Typed one character at a time in the dock, so the three dots are three
+     characters and not one ellipsis glyph. */
+  readingNow: "reading...",
   text: "Text",
   focus: "Focus",
   focusHere: "Focus from here",

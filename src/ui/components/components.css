@@ -99,6 +99,24 @@
   }
 }
 
+/* Modifiers, not new variants: the same shape carrying a different weight.
+   `.is-danger` set that precedent. */
+.btn-circle.is-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn-circle.is-lead {
+  width: var(--h-lg);
+  height: var(--h-lg);
+}
+
+@media (hover: hover) {
+  .btn-circle.is-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+}
+
 /* ---------- segmented control ---------- */
 
 .segmented {
@@ -858,4 +876,35 @@
 
 .action-menu .menu-check {
   color: var(--text-2);
+}
+
+
+/* ---------- typing ---------- */
+
+/*
+ * Typing is a width animation over monospace, so `ch` is exact and `steps()`
+ * lands on character boundaries. Without the steps it is a wipe, not typing.
+ */
+.typing {
+  display: inline-block;
+  width: calc(var(--n) * 1ch);
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  animation: typing 3.2s infinite;
+  animation-timing-function: steps(var(--n), end);
+}
+
+@keyframes typing {
+  0%   { width: 0; }
+  55%  { width: calc(var(--n) * 1ch); }
+  90%  { width: calc(var(--n) * 1ch); }
+  100% { width: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing {
+    width: auto;
+    animation: none;
+  }
 }
