@@ -99,6 +99,53 @@
   }
 }
 
+/*
+ * A round target with its name under it. The circle is drawn on the icon
+ * itself rather than on the button, so the label sits outside the fill while
+ * staying inside the one hit area — a caption next to a button is two things
+ * to aim at, and only one of them looks like a target.
+ */
+.btn-stack {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 0;
+  font-size: var(--step-label);
+  color: var(--text-2);
+}
+
+.btn-stack > svg {
+  box-sizing: content-box;
+  width: 18px;
+  height: 18px;
+  padding: 13px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  transition: background-color var(--enter);
+}
+
+@media (hover: hover) {
+  .btn-stack:hover:not(:disabled) { color: var(--text); }
+  .btn-stack:hover:not(:disabled) > svg { background: var(--surface-3); }
+}
+
+/*
+ * A button the width of what is in it. The default label stretches so that
+ * list rows can hold a value on the right; a pill with two words in it should
+ * be the size of two words.
+ */
+.btn-hug {
+  width: auto;
+  justify-self: center;
+  padding: 0 var(--space-5);
+}
+
+.btn-hug .btn-label {
+  flex: none;
+}
+
 /* Modifiers, not new variants: the same shape carrying a different weight.
    `.is-danger` set that precedent. */
 .btn-circle.is-primary {

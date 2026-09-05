@@ -20,7 +20,7 @@ export const copy = {
   linkTitle: "Add a link",
   linkPlaceholder: "https://",
   openFile: "Open file",
-  sample: "Try a sample",
+  sample: "Try something",
   or: "or",
   drop: "Drop it anywhere.",
   hint: "EPUB, PDF, DOCX, Markdown, HTML or plain text. Nothing leaves this machine.",

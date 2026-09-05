@@ -184,6 +184,14 @@ export const Specimen = () => {
               <Button variant="circle" className="is-primary is-lead" icon="play" aria-label="Read" disabled />
             </div>
           </Cell>
+          <Cell label="stack">
+            <div className="spec-row">
+              <Button variant="stack" icon="paste">Paste</Button>
+              <Button variant="stack" icon="link">Web link</Button>
+              <Button variant="stack" icon="file" disabled>Open file</Button>
+            </div>
+          </Cell>
+          <Cell label="primary hugging"><Button variant="primary" className="btn-hug" icon="bolt">Try something</Button></Cell>
           <Cell label="typing">
             <span className="mono"><Typing text={copy.readingNow} /></span>
           </Cell>

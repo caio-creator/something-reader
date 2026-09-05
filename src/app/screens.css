@@ -103,6 +103,13 @@
   margin-bottom: var(--space-2);
 }
 
+/* Three equal columns: three ways in, none of them more important. */
+.import-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
 .or {
   text-align: center;
   font-size: var(--step-eyebrow);

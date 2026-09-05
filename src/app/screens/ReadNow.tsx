@@ -63,17 +63,19 @@ export const ReadNow = ({
           </div>
         ) : (
           <>
-            <Button icon="paste" onClick={() => setSheet("paste")}>
-              {copy.paste}
-            </Button>
-            <Button icon="link" onClick={() => setSheet("link")}>
-              {copy.link}
-            </Button>
-            <Button icon="file" onClick={() => fileInput.current?.click()}>
-              {copy.openFile}
-            </Button>
+            <div className="import-actions">
+              <Button variant="stack" icon="paste" onClick={() => setSheet("paste")}>
+                {copy.paste}
+              </Button>
+              <Button variant="stack" icon="link" onClick={() => setSheet("link")}>
+                {copy.link}
+              </Button>
+              <Button variant="stack" icon="file" onClick={() => fileInput.current?.click()}>
+                {copy.openFile}
+              </Button>
+            </div>
             <p className="or mono">{copy.or}</p>
-            <Button variant="primary" icon="bolt" onClick={onSample}>
+            <Button variant="primary" className="btn-hug" icon="bolt" onClick={onSample}>
               {copy.sample}
             </Button>
           </>
