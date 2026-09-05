@@ -1,4 +1,15 @@
 import * as ort from "onnxruntime-web";
+// The bundler resolves the binary and hands back a URL that is right in dev
+// and in a build. Without this, onnxruntime asks for a path that does not
+// exist, the dev server answers every unknown path with index.html, and the
+// runtime reports "expected magic word 00 61 73 6d, found 3c 21 64 6f" —
+// which is `<!do`, the start of that HTML.
+// A relative path, not a package specifier: onnxruntime-web does not list
+// its own binary in its exports map, so `onnxruntime-web/dist/...` cannot be
+// resolved. `?url` emits the file and hands back a URL that is correct in
+// dev and in a build.
+/* eslint-disable-next-line import/no-relative-packages */
+import wasmUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm?url";
 import { HOST, openCache, PACK, type Progress, type VoiceId } from "./pack";
 import type { Cfgs, Model, Sessions, Style } from "./inference";
 
@@ -54,12 +65,32 @@ const fetchCached = async (path: string, onChunk: (bytes: number) => void): Prom
   return buffer;
 };
 
+/**
+ * Where the runtime's own binary lives, and how many threads it may use.
+ *
+ * Threading needs SharedArrayBuffer, which needs the page to be
+ * cross-origin-isolated. Something is not, and making it so would mean COEP
+ * headers on every asset — so this asks for the number of threads the page can
+ * actually have rather than letting the runtime discover the answer by
+ * failing.
+ */
+let configured = false;
+const configure = () => {
+  if (configured) return;
+  ort.env.wasm.wasmPaths = { wasm: wasmUrl };
+  ort.env.wasm.numThreads = globalThis.crossOriginIsolated
+    ? Math.min(4, navigator.hardwareConcurrency || 1)
+    : 1;
+  configured = true;
+};
+
 const sessionOptions: ort.InferenceSession.SessionOptions = {
   executionProviders: ["webgpu", "wasm"],
   graphOptimizationLevel: "all",
 };
 
 export const loadModel = async (onProgress?: (p: Progress) => void): Promise<Model> => {
+  configure();
   const total = PACK.files.reduce((sum, f) => sum + f.bytes, 0);
   let received = 0;
   const tick = (bytes: number) => {
