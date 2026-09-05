@@ -21,6 +21,7 @@ export const markdownToSections = (source: string): Section[] => {
   };
 
   let pendingList: string[] = [];
+  let listDepth = 0;
   const flushList = () => {
     if (pendingList.length === 0) return;
     current.push(block("list", pendingList.map((i) => `• ${i}`).join("\n")));
@@ -28,6 +29,10 @@ export const markdownToSections = (source: string): Section[] => {
   };
 
   for (const token of tokens) {
+    if (token.type === "bullet_list_open" || token.type === "ordered_list_open") {
+      listDepth += 1;
+      continue;
+    }
     if (token.type === "heading_open") {
       flushList();
       const inline = tokens[tokens.indexOf(token) + 1];
@@ -39,6 +44,7 @@ export const markdownToSections = (source: string): Section[] => {
       }
       current.push(block("heading", title, level));
     } else if (token.type === "paragraph_open") {
+      if (listDepth > 0) continue;
       const inline = tokens[tokens.indexOf(token) + 1];
       if (inline?.content) current.push(block("paragraph", inline.content));
     } else if (token.type === "blockquote_open") {

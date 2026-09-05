@@ -76,10 +76,10 @@ export const App = () => {
       if (!found) return;
       engineRef.current?.dispose();
       engineRef.current = null;
-      setDoc(found);
-      setMode(nextMode);
       const position = (await getPosition(id)) ?? null;
       setResume(position);
+      setDoc(found);
+      setMode(nextMode);
       if (nextMode === "focus") {
         const engine = createEngine(found, position ?? null, settings.wpm);
         engineRef.current = engine;
