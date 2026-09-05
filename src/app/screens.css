@@ -326,9 +326,19 @@
 }
 
 .thing-remove {
+  /* A fixed target, centred. It was stretching to the card's height and, at
+     pill radius, rendering as a tall capsule. */
+  width: 40px;
+  height: 40px;
+  min-height: 0;
+  padding: 0;
+  align-self: center;
+  flex: none;
+  justify-content: center;
+  border-radius: 50%;
   opacity: 0;
   color: var(--text-3);
-  transition: opacity var(--enter), color var(--enter);
+  transition: opacity var(--enter), color var(--enter), background-color var(--enter);
 }
 
 .thing-remove:focus-visible {
@@ -611,13 +621,17 @@
 
 .reader-top {
   display: grid;
-  grid-template-columns: var(--tap) 1fr auto;
+  /* Equal side columns, or the title centres in the leftover space rather than
+     in the bar — one button on the left against three on the right. */
+  grid-template-columns: minmax(var(--tap), 1fr) auto minmax(var(--tap), 1fr);
   align-items: center;
   gap: var(--space-4);
   padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-5) 0;
 }
 
 .reader-title {
+  justify-self: center;
+  max-width: 100%;
   font-size: var(--step-eyebrow);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -630,6 +644,7 @@
 
 .reader-top-actions {
   display: flex;
+  justify-content: flex-end;
   gap: var(--space-3);
 }
 

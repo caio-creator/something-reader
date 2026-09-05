@@ -67,6 +67,31 @@ bun run dev
 
 Then open http://localhost:5173.
 
+## On a phone
+
+**Tonight, over your own network.** Nothing to deploy:
+
+```bash
+bun run dev --host
+```
+
+Vite prints a `Network:` address. Open it on a phone on the same Wi-Fi. Your
+documents are stored in that phone's browser, not on the Mac — but the Mac has
+to be running, and web-link import needs it because the fetch proxy lives
+there.
+
+**Properly, as an installed app.** The build is a static SPA, so any static
+host works. Over HTTPS the service worker registers, and Add to Home Screen
+gives a real icon, a standalone window and full offline use:
+
+```bash
+bun run build        # dist/ is ~3.9 MB
+```
+
+Documents still never leave the device — the host only serves the app itself.
+Web-link import is the one feature that needs the local server, since the
+browser cannot fetch other origins on its own.
+
 ```bash
 bun test        # unit tests
 bun run build   # typecheck + production build
