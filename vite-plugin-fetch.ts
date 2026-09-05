@@ -81,9 +81,16 @@ const requestPinned = (target: URL, pin: { address: string; family: number }): P
       target,
       {
         // The socket goes to the address we checked, while SNI and the Host
-        // header still carry the real hostname.
-        lookup: (_hostname, _options, callback) =>
-          callback(null, pin.address as never, pin.family),
+        // header still carry the real hostname. Node asks with `all: true`, and
+        // then wants an array back rather than positional arguments.
+        lookup: ((
+          _hostname: string,
+          options: { all?: boolean },
+          callback: (err: null, address: unknown, family?: number) => void,
+        ) =>
+          options.all
+            ? callback(null, [{ address: pin.address, family: pin.family }])
+            : callback(null, pin.address, pin.family)) as never,
         headers: {
           accept: "text/html,application/xhtml+xml",
           "accept-encoding": "identity",
