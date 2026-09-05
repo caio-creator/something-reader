@@ -93,3 +93,18 @@ the guide rails.
 
 `#specimen` renders the whole system on one page. Nothing joins the set without
 appearing there.
+
+
+## The mark
+
+A capital **S** set in Charter Bold, amber on black.
+
+Charter is not an arbitrary pick: it already sits in the reading stack behind
+Literata, so the mark is cut from the same material as the prose. It is set,
+not drawn, for the same reason every glyph icon is.
+
+It replaced a drawing of the reader's rails. That drawing is honest about what
+the product does and it is right in the navigation at 23px — but a favicon is
+16px, and two hairlines with a lozenge between them dissolve at that size. A
+letterform survives. One mark across the favicon, the home-screen icon and the
+manifest; the maskable variant sits smaller so the glyph clears a circular crop.
