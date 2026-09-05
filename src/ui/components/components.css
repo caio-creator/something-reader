@@ -5,11 +5,15 @@
   align-items: center;
   gap: var(--space-2);
   font-weight: 500;
-  transition: background-color var(--enter), color var(--enter), transform var(--exit), border-color var(--enter);
+  transition:
+    background-color var(--enter),
+    color var(--enter),
+    border-color var(--enter),
+    transform var(--dur-press) ease-out;
 }
 
 .btn:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
 .btn-label {
@@ -25,20 +29,22 @@
 
 .btn-row {
   width: 100%;
-  min-height: var(--tap);
+  min-height: var(--h);
   padding: 0 var(--space-4);
   border-radius: var(--radius-control);
   background: var(--surface-2);
   color: var(--text);
 }
 
-.btn-row:hover:not(:disabled) {
-  background: var(--surface-3);
+@media (hover: hover) {
+  .btn-row:hover:not(:disabled) {
+    background: var(--surface-3);
+  }
 }
 
 .btn-primary {
   width: 100%;
-  min-height: var(--tap);
+  min-height: var(--h-lg);
   padding: 0 var(--space-4);
   border-radius: var(--radius-control);
   background: var(--accent);
@@ -46,20 +52,24 @@
   font-weight: 600;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
 }
 
 .btn-ghost {
-  min-height: var(--tap);
+  min-height: var(--h);
   padding: 0 var(--space-3);
   border-radius: var(--radius-control);
   color: var(--text-2);
 }
 
-.btn-ghost:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--text);
+@media (hover: hover) {
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-2);
+    color: var(--text);
+  }
 }
 
 .btn-quiet {
@@ -67,8 +77,10 @@
   font-size: var(--step-label);
 }
 
-.btn-quiet:hover:not(:disabled) {
-  color: var(--text);
+@media (hover: hover) {
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--text);
+  }
 }
 
 .btn-circle {
@@ -81,8 +93,10 @@
   flex: none;
 }
 
-.btn-circle:hover:not(:disabled) {
-  background: var(--surface-3);
+@media (hover: hover) {
+  .btn-circle:hover:not(:disabled) {
+    background: var(--surface-3);
+  }
 }
 
 /* ---------- segmented control ---------- */
@@ -98,17 +112,20 @@
 
 .segmented button {
   flex: 1;
-  min-height: 34px;
+  min-height: var(--h-sm);
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
   font-size: var(--step-label);
+  letter-spacing: var(--track-label);
   font-weight: 500;
   color: var(--text-2);
   transition: background-color var(--enter), color var(--enter);
 }
 
-.segmented button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .segmented button:hover {
+    color: var(--text);
+  }
 }
 
 .segmented button.on {
@@ -172,13 +189,13 @@
   font-weight: 400;
   line-height: 1.1;
   color: var(--word-color, var(--text));
-  animation: word-in 120ms var(--ease);
-}
-
-/* Replace, never slide: motion here would reintroduce the saccades RSVP removes. */
-@keyframes word-in {
-  from { opacity: 0.35; }
-  to { opacity: 1; }
+  letter-spacing: -0.02em;
+  /*
+   * No transition, deliberately. At 300 WPM a word is on screen for 200ms; any
+   * fade means the eye spends a third of that chasing motion instead of
+   * fixating, which is the opposite of what the guides are for.
+   */
+  transition: none;
 }
 
 .focus-word.size-reader { font-size: clamp(38px, 9vw, 72px); }
@@ -200,7 +217,7 @@
   justify-items: center;
   background: var(--scrim);
   backdrop-filter: blur(3px);
-  animation: fade-in var(--enter);
+  animation: fade-in var(--dur-pop) var(--ease);
 }
 
 @keyframes fade-in {
@@ -216,13 +233,22 @@
   padding: var(--space-3) var(--space-4) calc(var(--space-5) + env(safe-area-inset-bottom));
   border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
   background: var(--surface);
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--glass-edge-top);
   box-shadow: var(--shadow);
-  animation: sheet-up 180ms var(--ease);
+  /* A sheet should arrive, not appear. */
+  animation: sheet-up var(--dur-sheet) var(--ease);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .sheet {
+    background: var(--glass-sheet);
+    backdrop-filter: saturate(180%) blur(40px);
+    -webkit-backdrop-filter: saturate(180%) blur(40px);
+  }
 }
 
 @keyframes sheet-up {
-  from { transform: translateY(14px); opacity: 0.6; }
+  from { transform: translateY(28px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
@@ -236,6 +262,7 @@
 .sheet-head h2 {
   text-align: center;
   font-size: var(--step-heading);
+  letter-spacing: var(--track-heading);
   font-weight: 600;
 }
 
@@ -283,7 +310,7 @@
   height: 40px;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 19px;
+  font-size: var(--step-title-2);
   color: var(--text-3);
   transition: color var(--enter), background-color var(--enter);
 }
@@ -311,8 +338,10 @@
   transition: transform var(--enter), box-shadow var(--enter);
 }
 
-.swatch:hover {
-  transform: scale(1.08);
+@media (hover: hover) {
+  .swatch:hover {
+    transform: scale(1.08);
+  }
 }
 
 .swatch.on {
@@ -323,8 +352,8 @@
 
 .ring-track { stroke: var(--hairline-strong); }
 .ring-fill { stroke: var(--accent); }
-.ring-check { stroke: var(--ok); }
-.ring.is-done .ring-track { stroke: color-mix(in srgb, var(--ok) 45%, transparent); }
+.ring-check { stroke: var(--accent); }
+.ring.is-done .ring-track { stroke: color-mix(in srgb, var(--accent) 40%, transparent); }
 
 /* ---------- tab bar ---------- */
 
@@ -338,11 +367,24 @@
   gap: var(--space-1);
   padding: 5px;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  border: 1px solid var(--hairline);
+  background: var(--surface);
   box-shadow: var(--shadow);
-  backdrop-filter: saturate(160%) blur(20px);
-  -webkit-backdrop-filter: saturate(160%) blur(20px);
+  /*
+   * A single light border reads as a drawn outline. A lit top edge and a
+   * shadowed bottom edge read as a physical lens.
+   */
+  border-top: 1px solid var(--glass-edge-top);
+  border-bottom: 1px solid var(--glass-edge-bottom);
+  border-left: 1px solid var(--hairline);
+  border-right: 1px solid var(--hairline);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .tabbar {
+    background: var(--glass);
+    backdrop-filter: saturate(180%) blur(30px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+  }
 }
 
 .tabbar button {
@@ -355,13 +397,15 @@
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
   font-size: 10px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   color: var(--text-2);
   transition: background-color var(--enter), color var(--enter);
 }
 
-.tabbar button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .tabbar button:hover {
+    color: var(--text);
+  }
 }
 
 .tabbar button.on {
@@ -378,10 +422,11 @@
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .tabbar {
+  .tabbar,
+  .sheet {
     background: var(--surface);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   .sheet-scrim { backdrop-filter: none; }
 }

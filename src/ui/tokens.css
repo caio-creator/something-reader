@@ -4,6 +4,9 @@
  * Dark first, amber as the brand colour. Three themes share one token contract,
  * so every component is written once. The anchor colour (the ORP pivot) is set
  * at runtime from settings and is the one hue the reader owns.
+ *
+ * Surfaces are tinted *warm* (R > B). A warm foreground on a cold grey ground
+ * is the thing that makes a dark theme read as a default rather than a choice.
  */
 
 :root,
@@ -11,15 +14,22 @@
   color-scheme: dark;
 
   --bg: #000000;
+  /* The traditional-text pane only. #F5F3EF on pure black is ~19:1, and at that
+     contrast serif strokes halate over a long read. */
+  --bg-read: #0d0c0b;
   --bg-wash: #0a0704;
-  --surface: #0e0e0e;
-  --surface-2: #17171a;
-  --surface-3: #232326;
-  --surface-press: #2c2c31;
+
+  --surface: #0f0e0d;
+  --surface-2: #171614;
+  --surface-3: #201e1b;
+  --surface-press: #2a2724;
 
   --text: #f5f3ef;
-  --text-2: #9b9691;
-  --text-3: #5e5a56;
+  /* One hue, varying alpha — so text stays hue-correct on translucent material. */
+  --text-2: rgba(245, 243, 239, 0.62);
+  --text-3: rgba(245, 243, 239, 0.48);
+  --text-4: rgba(245, 243, 239, 0.3);
+  --text-read: rgba(245, 243, 239, 0.88);
 
   --accent: #e8a33d;
   --accent-hover: #f0b25a;
@@ -27,48 +37,66 @@
   --accent-ink: #140e04;
   --accent-wash: rgba(232, 163, 61, 0.14);
 
-  --danger: #e5533d;
-  --ok: #4caf6d;
+  /* The only second hue in the app, and only for irreversible destruction. */
+  --danger: #b4542f;
+  --ok: var(--accent);
 
   --hairline: rgba(255, 255, 255, 0.09);
   --hairline-strong: rgba(255, 255, 255, 0.16);
   --rule: rgba(255, 255, 255, 0.16);
   --scrim: rgba(0, 0, 0, 0.62);
   --shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+
+  /* Translucent material. Glass belongs on the pill and on sheets, nowhere else. */
+  --glass: rgba(23, 22, 20, 0.72);
+  --glass-sheet: rgba(20, 19, 17, 0.86);
+  --glass-edge-top: rgba(255, 255, 255, 0.16);
+  --glass-edge-bottom: rgba(0, 0, 0, 0.55);
 }
 
 :root[data-theme="dim"] {
   color-scheme: dark;
 
-  --bg: #111113;
+  --bg: #121110;
+  --bg-read: #151412;
   --bg-wash: #16120c;
-  --surface: #191a1d;
-  --surface-2: #212226;
-  --surface-3: #2c2d32;
-  --surface-press: #36373d;
+
+  --surface: #1a1917;
+  --surface-2: #22201d;
+  --surface-3: #2c2a26;
+  --surface-press: #37342f;
 
   --text: #f2f0ec;
-  --text-2: #a39f99;
-  --text-3: #6b6762;
+  --text-2: rgba(242, 240, 236, 0.64);
+  --text-3: rgba(242, 240, 236, 0.5);
+  --text-4: rgba(242, 240, 236, 0.32);
+  --text-read: rgba(242, 240, 236, 0.9);
 
   --hairline: rgba(255, 255, 255, 0.08);
   --hairline-strong: rgba(255, 255, 255, 0.14);
   --rule: rgba(255, 255, 255, 0.14);
+
+  --glass: rgba(34, 32, 29, 0.74);
+  --glass-sheet: rgba(26, 25, 23, 0.88);
 }
 
 :root[data-theme="paper"] {
   color-scheme: light;
 
   --bg: #f7f4ee;
+  --bg-read: #faf7f1;
   --bg-wash: #f3ece0;
+
   --surface: #fffdf9;
   --surface-2: #efeae0;
   --surface-3: #e2dbcd;
   --surface-press: #d5cdbc;
 
   --text: #16130f;
-  --text-2: #635c51;
-  --text-3: #8f877a;
+  --text-2: rgba(22, 19, 15, 0.74);
+  --text-3: rgba(22, 19, 15, 0.6);
+  --text-4: rgba(22, 19, 15, 0.4);
+  --text-read: rgba(22, 19, 15, 0.92);
 
   /* Darkened so amber still clears AA on a light ground. */
   --accent: #94600f;
@@ -77,14 +105,18 @@
   --accent-ink: #fffdf9;
   --accent-wash: rgba(148, 96, 15, 0.12);
 
-  --danger: #b3341f;
-  --ok: #2f7d4a;
+  --danger: #9c3a1c;
 
   --hairline: rgba(22, 19, 15, 0.1);
   --hairline-strong: rgba(22, 19, 15, 0.18);
   --rule: rgba(22, 19, 15, 0.22);
   --scrim: rgba(40, 34, 26, 0.4);
   --shadow: 0 18px 48px rgba(60, 48, 30, 0.16);
+
+  --glass: rgba(255, 253, 249, 0.76);
+  --glass-sheet: rgba(255, 253, 249, 0.9);
+  --glass-edge-top: rgba(255, 255, 255, 0.9);
+  --glass-edge-bottom: rgba(22, 19, 15, 0.12);
 }
 
 :root {
@@ -96,17 +128,35 @@
   --font-read: "Literata Variable", "Iowan Old Style", Charter, Georgia, ui-serif, serif;
   --font-dyslexic: "OpenDyslexic", var(--font-read);
 
-  /* Chosen in Settings; drives the reader and the focus word. */
-  --reading-font: var(--font-read);
-  --reading-size: 20px;
-  --measure: 66ch;
-
-  --step-display: 40px;
+  /*
+   * UI scale. Tracking is size-specific — a single letter-spacing is wrong at
+   * both ends of a scale. These follow Inter's optical curve,
+   * -0.0223 + 0.185·e^(-0.1745·px), evaluated per step.
+   */
+  --step-display: 34px;
   --step-title: 28px;
-  --step-heading: 19px;
-  --step-body: 16px;
+  --step-title-2: 22px;
+  --step-heading: 17px;
+  --step-body: 17px;
+  --step-callout: 15px;
   --step-label: 13px;
   --step-eyebrow: 11px;
+
+  --track-display: -0.021em;
+  --track-title: -0.021em;
+  --track-title-2: -0.018em;
+  --track-heading: -0.013em;
+  --track-body: -0.013em;
+  --track-callout: -0.009em;
+  --track-label: -0.003em;
+  --track-eyebrow: 0.14em;
+
+  /* Reading is its own scale. Prose is not UI body copy. */
+  --reading-font: var(--font-read);
+  --reading-size: 19px;
+  --reading-leading: 1.58;
+  --reading-track: -0.003em;
+  --measure: 34rem;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -117,16 +167,40 @@
   --space-7: 48px;
   --space-8: 64px;
 
-  --radius-control: 10px;
   --radius-card: 18px;
+  --pad-card: 16px;
+  /* Concentric: an inner radius is the outer minus the padding between them. */
+  --radius-control: calc(var(--radius-card) - var(--pad-card) + 8px);
   --radius-sheet: 24px;
   --radius-pill: 999px;
 
+  --h-sm: 32px;
+  --h: 44px;
+  --h-lg: 50px;
   --tap: 44px;
 
+  /*
+   * One curve, durations per interaction class. A press and a sheet are not the
+   * same event, and giving them the same duration makes one sluggish and the
+   * other abrupt. Exits run at ~0.75x, floored so nothing "vanishes".
+   */
   --ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --enter: 140ms var(--ease);
-  --exit: 110ms var(--ease);
+  --dur-press: 100ms;
+  --dur-control: 150ms;
+  --dur-pop: 200ms;
+  --dur-pop-out: 150ms;
+  --dur-sheet: 450ms;
+  --dur-route: 350ms;
+
+  --enter: var(--dur-control) var(--ease);
+  --exit: var(--dur-pop-out) var(--ease);
 
   --tabbar-space: 96px;
+}
+
+/* A finer pointer can carry a smaller standard control. */
+@media (pointer: fine) {
+  :root {
+    --h: 38px;
+  }
 }

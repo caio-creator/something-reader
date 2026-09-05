@@ -1,0 +1,23 @@
+- generic [ref=f3e3]:
+  - link "Skip to content" [ref=f3e4] [cursor=pointer]:
+    - /url: "#main"
+  - main [ref=f3e5]:
+    - generic [ref=f3e8]:
+      - generic [ref=f3e9]: so
+      - generic [ref=f3e10]: m
+      - generic [ref=f3e11]: ething.
+    - generic [ref=f3e12]:
+      - paragraph [ref=f3e13]: Add something
+      - button "Paste" [ref=f3e14] [cursor=pointer]
+      - button "Web link" [ref=f3e18] [cursor=pointer]
+      - button "Open file" [ref=f3e22] [cursor=pointer]
+      - paragraph [ref=f3e26]: or
+      - button "Try a sample" [ref=f3e27] [cursor=pointer]
+      - generic [ref=f3e31]:
+        - generic [ref=f3e32]: something.
+        - generic [ref=f3e33]: v0.2.0
+    - paragraph [ref=f3e34]: EPUB, PDF, DOCX, Markdown, HTML or plain text. Nothing leaves this machine.
+  - navigation "Sections" [ref=f3e35]:
+    - button "Things" [ref=f3e36] [cursor=pointer]
+    - button "Read now" [ref=f3e40] [cursor=pointer]
+    - button "Settings" [ref=f3e44] [cursor=pointer]

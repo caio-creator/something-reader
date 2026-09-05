@@ -3,7 +3,7 @@ import { loadSettings, saveSettings } from "@core/storage/idb";
 import { defaultSettings, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
 import { SettingsContext } from "./settings-context";
 
-const READING_SIZES = { s: "18px", m: "20px", l: "23px" } as const;
+const READING_SIZES = { s: "17px", m: "19px", l: "22px" } as const;
 const READING_FONTS = {
   sans: "var(--font-ui)",
   serif: "var(--font-read)",
@@ -39,7 +39,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty("--reading-size", READING_SIZES[settings.fontSize]);
     root.style.setProperty("--reading-font", READING_FONTS[settings.font]);
     root.style.setProperty("--word-color", EMPHASIS[settings.emphasis]);
-    root.style.setProperty("--measure", `${settings.measure}ch`);
+    root.style.setProperty("--measure", `${settings.measure / 2}rem`);
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", settings.theme === "paper" ? "#F7F4EE" : settings.theme === "dim" ? "#111113" : "#000000");
