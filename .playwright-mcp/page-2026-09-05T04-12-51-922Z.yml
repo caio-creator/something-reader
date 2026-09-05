@@ -1,0 +1,30 @@
+- generic [ref=f2e3]:
+  - link "Skip to content" [ref=f2e4] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=f2e87]:
+    - generic [ref=f2e88]:
+      - button "Close" [ref=f2e89] [cursor=pointer]
+      - generic [ref=f2e92]: The Strait and the Story
+      - button "Pace" [ref=f2e94] [cursor=pointer]
+    - generic [ref=f2e97]:
+      - generic [ref=f2e98]:
+        - generic [ref=f2e99]:
+          - strong [ref=f2e100]: Tap to play
+          - generic [ref=f2e101]: Tap anywhere in the reader to play.
+        - button "Close" [ref=f2e102] [cursor=pointer]
+      - button "Play" [ref=f2e103] [cursor=pointer]:
+        - generic [ref=f2e105]:
+          - generic [ref=f2e106]: T
+          - generic [ref=f2e107]: h
+          - generic [ref=f2e108]: e
+    - generic [ref=f2e109]:
+      - generic [ref=f2e110]:
+        - generic [ref=f2e111]: 00:00:00
+        - slider "Position" [ref=f2e112]: "0"
+        - generic [ref=f2e113]: 00:00:10
+      - generic [ref=f2e114]:
+        - button "Text" [ref=f2e115] [cursor=pointer]
+        - button "Play" [ref=f2e119] [cursor=pointer]
+      - generic [ref=f2e123]:
+        - generic [ref=f2e124]: something.
+        - generic [ref=f2e125]: v0.2.0

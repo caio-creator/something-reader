@@ -32,16 +32,39 @@ export const textImporter: Importer = {
   },
 };
 
-export const importPastedText = async (raw: string, title = "Pasted text") => {
+const LOOKS_LIKE_MARKDOWN = /^#{1,6}\s|\n#{1,6}\s|\n[-*]\s|\n>\s|```/;
+
+/**
+ * A title worth showing in the library. A row that says "Pasted text" three
+ * times is useless, so the first line is used when it reads like a title:
+ * short, and not the opening sentence of a paragraph.
+ */
+const deriveTitle = (text: string): string => {
+  const first = text.split("\n", 1)[0]!.trim().replace(/^#+\s*/, "");
+  if (first && first.length <= 80 && !/[.!?;:,]$/.test(first)) return first;
+  const words = text.replace(/\s+/g, " ").trim().split(" ").slice(0, 7).join(" ");
+  return words ? `${words}…` : "Pasted text";
+};
+
+export const importPastedText = async (raw: string, title?: string) => {
   const text = raw.trim();
   if (!text) throw new ImportError("empty", "Nothing to read.");
+
+  // Pasted Markdown should keep its structure rather than flatten to paragraphs.
+  if (!title && LOOKS_LIKE_MARKDOWN.test(text)) {
+    const { markdownImporter } = await import("./markdown");
+    const encoded = new TextEncoder().encode(text);
+    return markdownImporter.importFile(encoded.buffer as ArrayBuffer, "pasted.md");
+  }
+
+  const resolved = title ?? deriveTitle(text);
   const encoded = new TextEncoder().encode(text);
   const blocks = paragraphsToBlocks(text);
   return assembleDocument({
     sourceType: "text",
-    sourceName: title,
-    sourceHash: await hashBytes(encoded.buffer),
-    title,
-    sections: [sectionFromBlocks(title, blocks, 0, "paste")],
+    sourceName: resolved,
+    sourceHash: await hashBytes(encoded.buffer as ArrayBuffer),
+    title: resolved,
+    sections: [sectionFromBlocks(resolved, blocks, 0, "paste")],
   });
 };

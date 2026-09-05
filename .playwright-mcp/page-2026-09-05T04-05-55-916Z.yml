@@ -1,0 +1,178 @@
+- generic [ref=f1e3]:
+  - link "Skip to content" [ref=f1e4] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=f1e66]:
+    - generic [ref=f1e67]:
+      - button "Close" [ref=f1e68] [cursor=pointer]
+      - generic [ref=f1e71]: Read something.
+      - button "Pace" [ref=f1e73] [cursor=pointer]
+    - generic [ref=f1e76]:
+      - generic [ref=f1e77]:
+        - generic [ref=f1e78]:
+          - strong [ref=f1e79]: Tap to play
+          - generic [ref=f1e80]: Tap anywhere in the reader to play.
+        - button "Close" [ref=f1e81] [cursor=pointer]
+      - button "Play" [ref=f1e82] [cursor=pointer]:
+        - generic [ref=f1e84]:
+          - generic [ref=f1e85]: F
+          - generic [ref=f1e86]: o
+          - generic [ref=f1e87]: cus
+    - generic [ref=f1e88]:
+      - generic [ref=f1e89]:
+        - generic [ref=f1e90]: 00:00:22
+        - slider "Position" [ref=f1e91]: "101"
+        - generic [ref=f1e92]: 00:00:18
+      - generic [ref=f1e93]:
+        - button "Text" [ref=f1e94] [cursor=pointer]
+        - button "Play" [ref=f1e98] [cursor=pointer]
+      - generic [ref=f1e102]:
+        - generic [ref=f1e103]: something.
+        - generic [ref=f1e104]: v0.2.0
+    - dialog "Your pace" [ref=f1e106]:
+      - generic [ref=f1e107]:
+        - button "Close" [active] [ref=f1e108] [cursor=pointer]
+        - heading "Your pace" [level=2] [ref=f1e111]
+      - listbox "Your pace" [ref=f1e113]:
+        - option [ref=f1e114]:
+          - button "100 WPM" [ref=f1e115] [cursor=pointer]
+        - option [ref=f1e116]:
+          - button "110 WPM" [ref=f1e117] [cursor=pointer]
+        - option [ref=f1e118]:
+          - button "120 WPM" [ref=f1e119] [cursor=pointer]
+        - option [ref=f1e120]:
+          - button "130 WPM" [ref=f1e121] [cursor=pointer]
+        - option [ref=f1e122]:
+          - button "140 WPM" [ref=f1e123] [cursor=pointer]
+        - option [ref=f1e124]:
+          - button "150 WPM" [ref=f1e125] [cursor=pointer]
+        - option [ref=f1e126]:
+          - button "160 WPM" [ref=f1e127] [cursor=pointer]
+        - option [ref=f1e128]:
+          - button "170 WPM" [ref=f1e129] [cursor=pointer]
+        - option [ref=f1e130]:
+          - button "180 WPM" [ref=f1e131] [cursor=pointer]
+        - option [ref=f1e132]:
+          - button "190 WPM" [ref=f1e133] [cursor=pointer]
+        - option [ref=f1e134]:
+          - button "200 WPM" [ref=f1e135] [cursor=pointer]
+        - option [ref=f1e136]:
+          - button "210 WPM" [ref=f1e137] [cursor=pointer]
+        - option [ref=f1e138]:
+          - button "220 WPM" [ref=f1e139] [cursor=pointer]
+        - option [ref=f1e140]:
+          - button "230 WPM" [ref=f1e141] [cursor=pointer]
+        - option [ref=f1e142]:
+          - button "240 WPM" [ref=f1e143] [cursor=pointer]
+        - option [ref=f1e144]:
+          - button "250 WPM" [ref=f1e145] [cursor=pointer]
+        - option [ref=f1e146]:
+          - button "260 WPM" [ref=f1e147] [cursor=pointer]
+        - option [ref=f1e148]:
+          - button "270 WPM" [ref=f1e149] [cursor=pointer]
+        - option [ref=f1e150]:
+          - button "280 WPM" [ref=f1e151] [cursor=pointer]
+        - option [ref=f1e152]:
+          - button "290 WPM" [ref=f1e153] [cursor=pointer]
+        - option [selected] [ref=f1e154]:
+          - button "300 WPM" [ref=f1e155] [cursor=pointer]
+        - option [ref=f1e156]:
+          - button "310 WPM" [ref=f1e157] [cursor=pointer]
+        - option [ref=f1e158]:
+          - button "320 WPM" [ref=f1e159] [cursor=pointer]
+        - option [ref=f1e160]:
+          - button "330 WPM" [ref=f1e161] [cursor=pointer]
+        - option [ref=f1e162]:
+          - button "340 WPM" [ref=f1e163] [cursor=pointer]
+        - option [ref=f1e164]:
+          - button "350 WPM" [ref=f1e165] [cursor=pointer]
+        - option [ref=f1e166]:
+          - button "360 WPM" [ref=f1e167] [cursor=pointer]
+        - option [ref=f1e168]:
+          - button "370 WPM" [ref=f1e169] [cursor=pointer]
+        - option [ref=f1e170]:
+          - button "380 WPM" [ref=f1e171] [cursor=pointer]
+        - option [ref=f1e172]:
+          - button "390 WPM" [ref=f1e173] [cursor=pointer]
+        - option [ref=f1e174]:
+          - button "400 WPM" [ref=f1e175] [cursor=pointer]
+        - option [ref=f1e176]:
+          - button "410 WPM" [ref=f1e177] [cursor=pointer]
+        - option [ref=f1e178]:
+          - button "420 WPM" [ref=f1e179] [cursor=pointer]
+        - option [ref=f1e180]:
+          - button "430 WPM" [ref=f1e181] [cursor=pointer]
+        - option [ref=f1e182]:
+          - button "440 WPM" [ref=f1e183] [cursor=pointer]
+        - option [ref=f1e184]:
+          - button "450 WPM" [ref=f1e185] [cursor=pointer]
+        - option [ref=f1e186]:
+          - button "460 WPM" [ref=f1e187] [cursor=pointer]
+        - option [ref=f1e188]:
+          - button "470 WPM" [ref=f1e189] [cursor=pointer]
+        - option [ref=f1e190]:
+          - button "480 WPM" [ref=f1e191] [cursor=pointer]
+        - option [ref=f1e192]:
+          - button "490 WPM" [ref=f1e193] [cursor=pointer]
+        - option [ref=f1e194]:
+          - button "500 WPM" [ref=f1e195] [cursor=pointer]
+        - option [ref=f1e196]:
+          - button "510 WPM" [ref=f1e197] [cursor=pointer]
+        - option [ref=f1e198]:
+          - button "520 WPM" [ref=f1e199] [cursor=pointer]
+        - option [ref=f1e200]:
+          - button "530 WPM" [ref=f1e201] [cursor=pointer]
+        - option [ref=f1e202]:
+          - button "540 WPM" [ref=f1e203] [cursor=pointer]
+        - option [ref=f1e204]:
+          - button "550 WPM" [ref=f1e205] [cursor=pointer]
+        - option [ref=f1e206]:
+          - button "560 WPM" [ref=f1e207] [cursor=pointer]
+        - option [ref=f1e208]:
+          - button "570 WPM" [ref=f1e209] [cursor=pointer]
+        - option [ref=f1e210]:
+          - button "580 WPM" [ref=f1e211] [cursor=pointer]
+        - option [ref=f1e212]:
+          - button "590 WPM" [ref=f1e213] [cursor=pointer]
+        - option [ref=f1e214]:
+          - button "600 WPM" [ref=f1e215] [cursor=pointer]
+        - option [ref=f1e216]:
+          - button "610 WPM" [ref=f1e217] [cursor=pointer]
+        - option [ref=f1e218]:
+          - button "620 WPM" [ref=f1e219] [cursor=pointer]
+        - option [ref=f1e220]:
+          - button "630 WPM" [ref=f1e221] [cursor=pointer]
+        - option [ref=f1e222]:
+          - button "640 WPM" [ref=f1e223] [cursor=pointer]
+        - option [ref=f1e224]:
+          - button "650 WPM" [ref=f1e225] [cursor=pointer]
+        - option [ref=f1e226]:
+          - button "660 WPM" [ref=f1e227] [cursor=pointer]
+        - option [ref=f1e228]:
+          - button "670 WPM" [ref=f1e229] [cursor=pointer]
+        - option [ref=f1e230]:
+          - button "680 WPM" [ref=f1e231] [cursor=pointer]
+        - option [ref=f1e232]:
+          - button "690 WPM" [ref=f1e233] [cursor=pointer]
+        - option [ref=f1e234]:
+          - button "700 WPM" [ref=f1e235] [cursor=pointer]
+        - option [ref=f1e236]:
+          - button "710 WPM" [ref=f1e237] [cursor=pointer]
+        - option [ref=f1e238]:
+          - button "720 WPM" [ref=f1e239] [cursor=pointer]
+        - option [ref=f1e240]:
+          - button "730 WPM" [ref=f1e241] [cursor=pointer]
+        - option [ref=f1e242]:
+          - button "740 WPM" [ref=f1e243] [cursor=pointer]
+        - option [ref=f1e244]:
+          - button "750 WPM" [ref=f1e245] [cursor=pointer]
+        - option [ref=f1e246]:
+          - button "760 WPM" [ref=f1e247] [cursor=pointer]
+        - option [ref=f1e248]:
+          - button "770 WPM" [ref=f1e249] [cursor=pointer]
+        - option [ref=f1e250]:
+          - button "780 WPM" [ref=f1e251] [cursor=pointer]
+        - option [ref=f1e252]:
+          - button "790 WPM" [ref=f1e253] [cursor=pointer]
+        - option [ref=f1e254]:
+          - button "800 WPM" [ref=f1e255] [cursor=pointer]
+      - button "Save" [ref=f1e257] [cursor=pointer]

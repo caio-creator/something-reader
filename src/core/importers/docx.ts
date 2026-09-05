@@ -17,9 +17,18 @@ export const docxImporter: Importer = {
   importFile: async (bytes, name, onProgress) => {
     onProgress?.("parsing", 0.2);
     const mammoth = await import("mammoth");
+
+    // mammoth ships two builds with different input contracts: the browser one
+    // (what Vite resolves, and what the worker runs) takes `arrayBuffer`, while
+    // the Node one takes a `buffer`. Tests exercise the latter.
+    const input =
+      typeof window === "undefined" && typeof Buffer !== "undefined"
+        ? { buffer: Buffer.from(bytes) }
+        : { arrayBuffer: bytes };
+
     let html: string;
     try {
-      const result = await mammoth.convertToHtml({ arrayBuffer: bytes });
+      const result = await mammoth.convertToHtml(input as Parameters<typeof mammoth.convertToHtml>[0]);
       html = result.value;
     } catch {
       throw new ImportError("corrupt", "That DOCX could not be opened.");

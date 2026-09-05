@@ -1,0 +1,35 @@
+- generic [ref=e34]:
+  - link "Skip to content" [ref=e35] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e79]:
+    - generic [ref=e80]:
+      - button "Close" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]: Read something.
+      - button "Pace" [ref=e86] [cursor=pointer]
+    - article [ref=e124]:
+      - region "Start" [ref=e125]:
+        - heading "Read something." [level=2] [ref=e126]
+        - paragraph [ref=e127]: Something is a local-first reader. You drop a file in. You read it. You leave. You come back. You are still there.
+        - paragraph [ref=e128]: It does not care whether the file was an EPUB, a PDF, a Markdown note, or a paragraph you pasted because someone sent you an 83-page report.
+      - region "Why this exists" [ref=e129]:
+        - heading "Why this exists" [level=2] [ref=e130]
+        - paragraph [ref=e131]: Most readers want an account, a catalog, or a weekly fee before they will open a file you already have. That is a strange way to treat a document.
+        - paragraph [ref=e132]: This sample is here so the first screen is never a lecture. It is a page.
+      - region "Focus mode" [ref=e133]:
+        - heading "Focus mode" [level=2] [ref=e134]
+        - paragraph [ref=e135]: Focus shows one word at a time, aligned on a pivot letter. That is a real perceptual trick. It is not a license to claim you now read three times faster with perfect memory.
+        - paragraph [ref=e136]: Use it when you want the words to come to you. Switch back when you need to look around.
+      - region "The deal" [ref=e137]:
+        - heading "The deal" [level=2] [ref=e138]
+        - paragraph [ref=e139]: • Your files stay in this browser. • Progress is saved when you pause, scroll, or leave. • There is no cloud in the way of the first sentence.
+    - generic [ref=e101]:
+      - generic [ref=e102]:
+        - generic [ref=e103]: 00:00:06
+        - slider "Position" [ref=e104]: "24"
+        - generic [ref=e105]: 00:00:34
+      - generic [ref=e106]:
+        - button "Focus" [active] [ref=e140] [cursor=pointer]
+        - button "Play" [ref=e141] [cursor=pointer]
+      - generic [ref=e115]:
+        - generic [ref=e116]: something.
+        - generic [ref=e117]: v0.2.0

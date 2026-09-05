@@ -62,14 +62,20 @@ export type ReadingPosition = {
 };
 
 export type ThemeName = "ink" | "dim" | "paper";
-export type FontChoice = "sans" | "serif" | "serif-condensed" | "dyslexic";
+export type FontChoice = "sans" | "serif" | "mono" | "dyslexic";
 export type GuideStrength = "normal" | "subtle" | "hidden";
 export type TextEmphasis = "prominent" | "normal" | "subtle";
 export type TextSize = "s" | "m" | "l";
 
+/**
+ * The neutral anchor follows the theme's text colour, so it stays visible on
+ * both Ink and Paper. A fixed near-white would vanish on a light background.
+ */
+export const NEUTRAL_ANCHOR = "neutral";
+
 export const ANCHOR_COLORS = [
   "#E8A33D",
-  "#F5F3EF",
+  NEUTRAL_ANCHOR,
   "#E5533D",
   "#F2C744",
   "#4CAF6D",

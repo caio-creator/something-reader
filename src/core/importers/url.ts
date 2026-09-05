@@ -20,7 +20,9 @@ export const importUrl = async (rawUrl: string): Promise<SomethingDocument> => {
 
   let payload: { url: string; html: string };
   try {
-    const response = await fetch(`/api/fetch?url=${encodeURIComponent(target.toString())}`);
+    const response = await fetch(`/api/fetch?url=${encodeURIComponent(target.toString())}`, {
+      headers: { "x-something-reader": "1" },
+    });
     const body = (await response.json()) as { url?: string; html?: string; error?: string };
     if (!response.ok || !body.html) {
       throw new ImportError("network", body.error ?? "Could not reach that link.");

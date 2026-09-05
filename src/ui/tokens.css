@@ -1,0 +1,132 @@
+/*
+ * something. — design tokens
+ *
+ * Dark first, amber as the brand colour. Three themes share one token contract,
+ * so every component is written once. The anchor colour (the ORP pivot) is set
+ * at runtime from settings and is the one hue the reader owns.
+ */
+
+:root,
+:root[data-theme="ink"] {
+  color-scheme: dark;
+
+  --bg: #000000;
+  --bg-wash: #0a0704;
+  --surface: #0e0e0e;
+  --surface-2: #17171a;
+  --surface-3: #232326;
+  --surface-press: #2c2c31;
+
+  --text: #f5f3ef;
+  --text-2: #9b9691;
+  --text-3: #5e5a56;
+
+  --accent: #e8a33d;
+  --accent-hover: #f0b25a;
+  --accent-dim: #a9761f;
+  --accent-ink: #140e04;
+  --accent-wash: rgba(232, 163, 61, 0.14);
+
+  --danger: #e5533d;
+  --ok: #4caf6d;
+
+  --hairline: rgba(255, 255, 255, 0.09);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --rule: rgba(255, 255, 255, 0.16);
+  --scrim: rgba(0, 0, 0, 0.62);
+  --shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="dim"] {
+  color-scheme: dark;
+
+  --bg: #111113;
+  --bg-wash: #16120c;
+  --surface: #191a1d;
+  --surface-2: #212226;
+  --surface-3: #2c2d32;
+  --surface-press: #36373d;
+
+  --text: #f2f0ec;
+  --text-2: #a39f99;
+  --text-3: #6b6762;
+
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --rule: rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="paper"] {
+  color-scheme: light;
+
+  --bg: #f7f4ee;
+  --bg-wash: #f3ece0;
+  --surface: #fffdf9;
+  --surface-2: #efeae0;
+  --surface-3: #e2dbcd;
+  --surface-press: #d5cdbc;
+
+  --text: #16130f;
+  --text-2: #635c51;
+  --text-3: #8f877a;
+
+  /* Darkened so amber still clears AA on a light ground. */
+  --accent: #94600f;
+  --accent-hover: #7c4f08;
+  --accent-dim: #b98a3e;
+  --accent-ink: #fffdf9;
+  --accent-wash: rgba(148, 96, 15, 0.12);
+
+  --danger: #b3341f;
+  --ok: #2f7d4a;
+
+  --hairline: rgba(22, 19, 15, 0.1);
+  --hairline-strong: rgba(22, 19, 15, 0.18);
+  --rule: rgba(22, 19, 15, 0.22);
+  --scrim: rgba(40, 34, 26, 0.4);
+  --shadow: 0 18px 48px rgba(60, 48, 30, 0.16);
+}
+
+:root {
+  /* The ORP pivot. Overridden at runtime from settings. */
+  --anchor: var(--accent);
+
+  --font-ui: "Inter Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-read: "Literata Variable", "Iowan Old Style", Charter, Georgia, ui-serif, serif;
+  --font-dyslexic: "OpenDyslexic", var(--font-read);
+
+  /* Chosen in Settings; drives the reader and the focus word. */
+  --reading-font: var(--font-read);
+  --reading-size: 20px;
+  --measure: 66ch;
+
+  --step-display: 40px;
+  --step-title: 28px;
+  --step-heading: 19px;
+  --step-body: 16px;
+  --step-label: 13px;
+  --step-eyebrow: 11px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-control: 10px;
+  --radius-card: 18px;
+  --radius-sheet: 24px;
+  --radius-pill: 999px;
+
+  --tap: 44px;
+
+  --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --enter: 140ms var(--ease);
+  --exit: 110ms var(--ease);
+
+  --tabbar-space: 96px;
+}

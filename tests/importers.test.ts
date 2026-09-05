@@ -96,3 +96,26 @@ describe("pasted text", () => {
     await expect(importPastedText("   ")).rejects.toMatchObject({ code: "empty" });
   });
 });
+
+describe("pasted titles", () => {
+  test("a short first line becomes the title", async () => {
+    const doc = await importPastedText("Notes on attention\n\nAttention is a shape.");
+    expect(doc.title).toBe("Notes on attention");
+  });
+
+  test("a first line that is a sentence falls back to an excerpt", async () => {
+    const doc = await importPastedText("Attention is not a resource you spend at all, really.\n\nMore.");
+    expect(doc.title).toBe("Attention is not a resource you spend…");
+  });
+
+  test("pasted markdown keeps its structure and heading title", async () => {
+    const doc = await importPastedText("# The Strait of Hormuz\n\nOil moves through it.\n\n## Costs\n\nMore.");
+    expect(doc.title).toBe("The Strait of Hormuz");
+    expect(doc.sections.length).toBeGreaterThan(1);
+  });
+
+  test("an explicit title still wins", async () => {
+    const doc = await importPastedText("# Ignored heading\n\nBody.", "Chosen");
+    expect(doc.title).toBe("Chosen");
+  });
+});
