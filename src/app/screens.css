@@ -86,7 +86,7 @@
   width: min(100%, 420px);
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-5) var(--space-4) var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-4);
   border-radius: var(--radius-card);
   background: var(--surface);
   border: 1px solid var(--hairline);
@@ -115,7 +115,7 @@
 .card-foot {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--space-3);
+  margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--hairline);
   font-size: var(--step-eyebrow);
@@ -611,8 +611,8 @@
   display: grid;
   grid-template-columns: var(--tap) 1fr auto;
   align-items: center;
-  gap: var(--space-3);
-  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) 0;
+  gap: var(--space-4);
+  padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-5) 0;
 }
 
 .reader-title {
@@ -628,7 +628,7 @@
 
 .reader-top-actions {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .focus-stage {
@@ -771,7 +771,8 @@
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  padding: 0 var(--space-1);
   font-size: var(--step-eyebrow);
   color: var(--text-3);
 }
@@ -779,8 +780,8 @@
 .dock-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -899,7 +900,11 @@
 /* ---------- wide-screen reader ---------- */
 
 @media (min-width: 700px) {
-  .reader-top { padding-top: max(var(--space-5), env(safe-area-inset-top)); }
+  .reader-top {
+    padding-top: max(var(--space-5), env(safe-area-inset-top));
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
   .text-stage { padding: var(--space-7) var(--space-5) 280px; }
 }
 
@@ -1078,12 +1083,17 @@
     color var(--dur-press) ease-out;
 }
 
+/*
+ * Every word in the paragraph being read shares one text colour. Dimming the
+ * unread half meant each word brightened as the mark reached it — a contrast
+ * step per word, which is the friction the ink was supposed to replace. Only
+ * the ink moves.
+ */
 .prose .block.is-active .word {
-  opacity: 0.5;
+  opacity: 1;
 }
 
 .prose .block.is-active .word.is-read {
-  opacity: 1;
   background:
     linear-gradient(
       100deg,
@@ -1102,7 +1112,6 @@
 }
 
 .word.is-now {
-  opacity: 1;
   /*
    * No colour flip. Inverting the word to dark-on-amber is a contrast jump
    * every 200ms, and the eye stops on it — friction exactly where reading

@@ -28,7 +28,7 @@ export const TabBar = ({
         className={active === tab.key ? "on" : ""}
         onClick={() => onChange(tab.key)}
       >
-        <Icon name={active === tab.key ? tab.active : tab.icon} size={24} strokeWidth={1.9} />
+        <Icon name={active === tab.key ? tab.active : tab.icon} size={23} strokeWidth={2} />
         <span>{tab.label}</span>
       </button>
     ))}

@@ -370,10 +370,10 @@
   transform: translateX(-50%);
   z-index: 40;
   display: flex;
-  gap: 4px;
-  padding: 8px;
+  gap: 2px;
+  padding: 7px;
   /* Half the height: a true pill, not a rounded rectangle. */
-  border-radius: 46px;
+  border-radius: 43px;
   background: var(--surface);
   box-shadow: var(--shadow);
   /*
@@ -398,16 +398,18 @@
   position: relative;
   display: grid;
   place-items: center;
-  gap: 4px;
-  min-width: 96px;
-  min-height: 60px;
-  padding: 0 var(--space-4);
-  border-radius: 30px;
+  /* Tight: the icon and its label are one object, not two stacked ones. */
+  gap: 3px;
+  min-width: 92px;
+  min-height: 58px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 29px;
   /* Navigation labels are names, not metadata: they belong to the sans voice. */
   font-family: var(--font-ui);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: -0.005em;
+  line-height: 1;
+  letter-spacing: -0.003em;
   color: var(--text-2);
   transition: color var(--enter);
 }
@@ -419,7 +421,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 30px;
+  border-radius: 29px;
   background: transparent;
   transition: background-color var(--enter), transform var(--dur-press) ease-out;
 }
@@ -449,6 +451,19 @@
 
 .tabbar button.on svg {
   color: var(--accent);
+}
+
+/*
+ * A solid glyph fills its box; an outlined one is mostly air. Rendered at the
+ * same nominal size they read as two different sizes, so the solid one is
+ * stepped down until the two match optically.
+ */
+.tabbar button svg {
+  display: block;
+}
+
+.tabbar button.on svg {
+  transform: scale(0.92);
 }
 
 /* From tablet up the pill moves to the top, as it does on the reference's iPad. */
@@ -793,7 +808,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--pad-card);
+  padding: var(--space-5);
   border-radius: var(--radius-card);
   background: var(--surface);
   border: 1px solid var(--hairline);
