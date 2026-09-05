@@ -4,7 +4,7 @@ export type TabKey = "things" | "now" | "settings";
 
 const TABS: { key: TabKey; icon: IconName; active: IconName; label: string }[] = [
   { key: "things", icon: "things", active: "things-solid", label: "Things" },
-  { key: "now", icon: "bolt", active: "bolt-solid", label: "Read now" },
+  { key: "now", icon: "read", active: "read-solid", label: "Read now" },
   { key: "settings", icon: "settings", active: "settings-solid", label: "Settings" },
 ];
 

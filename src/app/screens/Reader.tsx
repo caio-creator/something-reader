@@ -107,13 +107,13 @@ export const Reader = ({
       {snapshot && (
         <div className="dock">
           <p className="dock-status mono">
-            {snapshot.playing ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.text}
+            {snapshot.playing ? <Typing text={copy.readingNow} /> : mode === "focus" ? copy.focus : copy.read}
           </p>
           <div className="dock-controls">
             <Button
               variant="circle"
-              icon={mode === "focus" ? "text" : "bolt"}
-              aria-label={mode === "focus" ? copy.text : copy.focus}
+              icon={mode === "focus" ? "read" : "focus"}
+              aria-label={mode === "focus" ? copy.toRead : copy.toFocus}
               onClick={() => setMode(mode === "focus" ? "text" : "focus")}
             />
             <Button
@@ -223,7 +223,7 @@ const Contents = ({
               <span className="contents-title">{section.title}</span>
               <span className="contents-meta mono">{timeLeft(estimateMs(tokens, wpm)).replace(" left", "")}</span>
             </span>
-            {active && <Icon name="bolt" size={16} />}
+            {active && <Icon name="read" size={16} />}
           </button>
         </li>
       );
@@ -474,7 +474,7 @@ const BlockView = memo(
               aria-label={copy.focusHere}
               onClick={() => onJump(block)}
             >
-              <Icon name="bolt" size={16} />
+              <Icon name="focus" size={16} />
             </button>
           </>
         ) : (

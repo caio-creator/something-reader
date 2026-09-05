@@ -24,7 +24,8 @@ import { ANCHOR_COLORS } from "@core/model/types";
  */
 
 const ICONS: IconName[] = [
-  "things", "bolt", "settings", "close", "gauge", "play", "pause", "stop", "text",
+  "things", "read", "focus", "listen", "sample", "settings", "close", "gauge",
+  "play", "pause", "stop", "text",
   "link", "paste", "file", "search", "trash", "back", "forward", "check",
   "weight", "palette", "guides", "shield", "contrast", "anchor", "textsize",
   "font", "chunk", "presets", "contents", "keyboard", "chevron", "database",
@@ -160,8 +161,8 @@ export const Specimen = () => {
 
       <Block title="Buttons">
         <div className="spec-grid">
-          <Cell label="primary"><Button variant="primary" icon="bolt">Read something</Button></Cell>
-          <Cell label="primary disabled"><Button variant="primary" icon="bolt" disabled>Read something</Button></Cell>
+          <Cell label="primary"><Button variant="primary" icon="read">Read something</Button></Cell>
+          <Cell label="primary disabled"><Button variant="primary" icon="read" disabled>Read something</Button></Cell>
           <Cell label="row"><Button icon="file">Open file</Button></Cell>
           <Cell label="row disabled"><Button icon="file" disabled>Open file</Button></Cell>
           <Cell label="row + trailing"><Button icon="clock" trailing="34m">Continue</Button></Cell>
@@ -191,7 +192,7 @@ export const Specimen = () => {
               <Button variant="stack" icon="file" disabled>Open file</Button>
             </div>
           </Cell>
-          <Cell label="primary hugging"><Button variant="primary" className="btn-hug" icon="bolt">Try something</Button></Cell>
+          <Cell label="primary hugging"><Button variant="primary" className="btn-hug" icon="sample">Try something</Button></Cell>
           <Cell label="typing">
             <span className="mono"><Typing text={copy.readingNow} /></span>
           </Cell>

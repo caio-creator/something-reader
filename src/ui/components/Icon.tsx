@@ -11,7 +11,8 @@
  */
 
 export type IconName =
-  | "things" | "bolt" | "settings" | "close" | "gauge" | "play" | "pause" | "stop"
+  | "things" | "read" | "focus" | "listen" | "sample" | "settings" | "close"
+  | "gauge" | "play" | "pause" | "stop"
   | "text" | "link" | "paste" | "file" | "search" | "trash" | "back"
   | "forward" | "check" | "weight" | "palette" | "guides" | "shield"
   | "contrast" | "anchor" | "textsize" | "font" | "chunk" | "presets"
@@ -19,7 +20,7 @@ export type IconName =
   | "drop" | "clock" | "reset"
   // Solid counterparts. Navigation reads as selected when its icon fills in —
   // a colour change alone is a weak signal at 24px.
-  | "things-solid" | "bolt-solid" | "settings-solid";
+  | "things-solid" | "read-solid" | "settings-solid";
 
 type Stroke = { d: string };
 type Filled = { d: string; fill: true; evenOdd?: boolean };
@@ -39,22 +40,46 @@ const ICONS: Record<IconName, Part[]> = {
     { d: "M6.2 8.6h7.6a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2z" },
   ],
   /*
-   * The reader's own mark: a word held between two rails. A lightning bolt
-   * means "fast" in every app ever shipped and nothing about this one; the
-   * rails are literally what focus mode draws.
+   * Prose with the line you are on marked solid — the reading trail the text
+   * mode actually draws, at icon scale. Read is the whole product, so it gets
+   * the drawing that is only about reading.
    */
-  bolt: [
-    { d: "M2.8 8.2h18.4M2.8 15.8h18.4" },
-    { d: "M9.4 11.05h5.2a.95.95 0 0 1 0 1.9H9.4a.95.95 0 0 1 0-1.9z", fill: true },
+  read: [
+    { d: "M4.4 7.2h15.2" },
+    { d: "M5.5 10.9h6.1a1.1 1.1 0 0 1 0 2.2H5.5a1.1 1.1 0 0 1 0-2.2z", fill: true },
+    { d: "M4.4 16.8h15.2" },
   ],
   /*
-   * Faders, not a gear. Almost everything behind this tab is an adjustment to
-   * how text looks and moves; a cog is the most borrowed glyph in software and
-   * says only "options exist".
+   * A shade, its beam, and one word lit inside it. Focus does not make the
+   * page shorter, it makes everything except one word go dark — which is the
+   * one thing a light can say that an arrow or a target cannot.
+   */
+  focus: [
+    { d: "M7.2 9.4 9.8 4.8h4.4l2.6 4.6z" },
+    { d: "M7.2 9.4 5.4 18.6M16.8 9.4l1.8 9.2" },
+    { d: "M9.9 15.5h4.2a1.1 1.1 0 0 1 0 2.2H9.9a1.1 1.1 0 0 1 0-2.2z", fill: true },
+  ],
+  // A voice: four bars, the shape a person's level actually makes.
+  listen: [{ d: "M6 10.2v3.6M10 6.6v10.8M14 8.4v7.2M18 10.8v2.4" }],
+  /*
+   * A page that is already here. The reading mark sits inside it, because the
+   * offer is not a file — it is something to read, waiting.
+   */
+  sample: [
+    { d: "M13.8 3.6H7.6A1.4 1.4 0 0 0 6.2 5v14a1.4 1.4 0 0 0 1.4 1.4h8.8a1.4 1.4 0 0 0 1.4-1.4V7.4z" },
+    { d: "M13.8 3.6V7.4h4" },
+    { d: "M9.3 12.5h5.4a1.05 1.05 0 0 1 0 2.1H9.3a1.05 1.05 0 0 1 0-2.1z", fill: true },
+  ],
+  /*
+   * Faders still — almost everything behind this tab adjusts how text looks
+   * and moves, and a cog says only that options exist. But standing up, not
+   * lying down: three horizontal rules with knobs on them read as a hamburger
+   * at 23px, which is the size the tab bar actually draws them.
    */
   settings: [
-    { d: "M3.6 7.4h16.8M3.6 12h16.8M3.6 16.6h16.8" },
-    { d: "M9.2 9.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM15.6 13.8a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6zM7.4 18.4a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z" },
+    { d: "M8.4 4.6v14.8M15.6 4.6v14.8" },
+    // A knob is a solid thing; at 16px a stroked one is a dot with a hole in it.
+    { d: "M8.4 11.4a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM15.6 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4z", fill: true },
   ],
   close: [{ d: "M6.8 6.8l10.4 10.4M17.2 6.8L6.8 17.2" }],
   // A real dial: swept arc, needle, hub.
@@ -166,13 +191,13 @@ const ICONS: Record<IconName, Part[]> = {
     { d: "M8.2 7.6V6.2a2 2 0 0 1 2-2h7.6a2 2 0 0 1 2 2v7.6a2 2 0 0 1-2 2h-1.4V10.6a2 2 0 0 0-2-2z", fill: true },
     { d: "M6.2 8.6h7.6a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2z", fill: true },
   ],
-  "bolt-solid": [
-    { d: "M2.8 7.35h18.4a.95.95 0 0 1 0 1.9H2.8a.95.95 0 0 1 0-1.9zM2.8 14.75h18.4a.95.95 0 0 1 0 1.9H2.8a.95.95 0 0 1 0-1.9z", fill: true },
-    { d: "M8.8 10.6h6.4a1.4 1.4 0 0 1 0 2.8H8.8a1.4 1.4 0 0 1 0-2.8z", fill: true },
+  "read-solid": [
+    { d: "M4.4 6.2h15.2a1 1 0 0 1 0 2H4.4a1 1 0 0 1 0-2zM4.4 15.8h15.2a1 1 0 0 1 0 2H4.4a1 1 0 0 1 0-2z", fill: true },
+    { d: "M5.4 10.6h6.3a1.4 1.4 0 0 1 0 2.8H5.4a1.4 1.4 0 0 1 0-2.8z", fill: true },
   ],
   "settings-solid": [
-    { d: "M3.6 6.4h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2zM3.6 11h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2zM3.6 15.6h16.8a1 1 0 0 1 0 2H3.6a1 1 0 0 1 0-2z", fill: true },
-    { d: "M9.2 9.8a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM15.6 14.4a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8zM7.4 19a2.4 2.4 0 1 0 0-4.8 2.4 2.4 0 0 0 0 4.8z", fill: true },
+    { d: "M8.4 3.6a1 1 0 0 1 1 1v14.8a1 1 0 0 1-2 0V4.6a1 1 0 0 1 1-1zM15.6 3.6a1 1 0 0 1 1 1v14.8a1 1 0 0 1-2 0V4.6a1 1 0 0 1 1-1z", fill: true },
+    { d: "M8.4 12a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM15.6 17.6a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2z", fill: true },
   ],
 };
 

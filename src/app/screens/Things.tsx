@@ -43,7 +43,7 @@ export const Things = ({
               { id: "paste", label: copy.paste, icon: "paste", onSelect: () => onAdd("paste") },
               { id: "link", label: copy.link, icon: "link", onSelect: () => onAdd("link") },
               { id: "file", label: copy.openFile, icon: "file", onSelect: () => onAdd("file") },
-              { id: "sample", label: copy.sample, icon: "bolt", onSelect: () => onAdd("sample") },
+              { id: "sample", label: copy.sample, icon: "sample", onSelect: () => onAdd("sample") },
             ]}
           />
         </div>
@@ -67,7 +67,7 @@ export const Things = ({
             icon="things"
             title={copy.emptyTitle}
             body={copy.emptyBody}
-            action={<Button variant="primary" icon="bolt" onClick={() => onAdd("sample")}>{copy.sample}</Button>}
+            action={<Button variant="primary" icon="sample" onClick={() => onAdd("sample")}>{copy.sample}</Button>}
           />
         </div>
       ) : filtered.length === 0 ? (

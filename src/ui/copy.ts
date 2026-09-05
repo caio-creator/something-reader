@@ -52,8 +52,15 @@ export const copy = {
   /* Typed one character at a time in the dock, so the three dots are three
      characters and not one ellipsis glyph. */
   readingNow: "reading...",
-  text: "Text",
+  /*
+   * The two shapes a document can take. `Read` rather than `Text` because the
+   * lexicon has said Read since the start and the code had drifted.
+   */
+  read: "Read",
   focus: "Focus",
+  /* Toggles say what they do. Two buttons in one dock cannot both be "Read". */
+  toRead: "Switch to Read",
+  toFocus: "Switch to Focus",
   focusHere: "Focus from here",
   tapTitle: "Tap to play",
   tapBody: "Tap anywhere in the reader to play.",

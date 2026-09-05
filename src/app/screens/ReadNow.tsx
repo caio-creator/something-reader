@@ -75,7 +75,7 @@ export const ReadNow = ({
               </Button>
             </div>
             <p className="or mono">{copy.or}</p>
-            <Button variant="primary" className="btn-hug" icon="bolt" onClick={onSample}>
+            <Button variant="primary" className="btn-hug" icon="sample" onClick={onSample}>
               {copy.sample}
             </Button>
           </>

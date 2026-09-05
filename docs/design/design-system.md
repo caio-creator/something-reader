@@ -74,20 +74,31 @@ optical padding. Two rules:
 - **Letterforms are set, never drawn.** A hand-plotted "A" reads as a mistake
   beside real type, so glyph icons render `<text>` in the app's own faces —
   Inter for weight and size, Literata for the typeface picker.
-- **An icon means something about this product, or it does not ship.** A
-  lightning bolt means "fast" in every app ever released and nothing about this
-  one; a cog says only that options exist. Read now is drawn as the rails with
-  a word held between them — literally what focus mode puts on screen. Things
-  is a stack, not a book spine, because this library holds PDFs and pasted
-  paragraphs as readily as novels. Settings is a set of faders, because almost
-  everything behind it adjusts how text looks and moves.
+- **An icon has to be about reading, or about this product, before it is about
+  its own cleverness.** The bar is not "never borrow a metaphor" — it is that
+  the borrowed one has to earn the space against a drawing made of what the
+  product actually does. A cog says only that options exist, so Settings is a
+  pair of faders instead: almost everything behind it adjusts how text looks
+  and moves, and they stand up rather than lie down because three horizontal
+  rules with knobs read as a hamburger at 23px. Things is a stack, not a book
+  spine, because this library holds PDFs and pasted paragraphs as readily as
+  novels. Read is prose with the line you are on marked solid — the reading
+  trail, at icon scale. Focus is a shade, a beam, and one word lit inside it:
+  a light is the one metaphor that says the page went dark around a word,
+  which is what focus mode does and what an arrow or a target cannot say.
+
+  This replaced a stricter reading of the same rule, under which Focus was
+  drawn as the rails with a word between them. The rails are honest and they
+  are still the product's mark — but the same drawing was carrying Focus, the
+  Read now tab and the sample button at once, which is three jobs for one
+  icon, and the rule below already forbids that.
 - **One job, one icon.** Three separate letter icons for text size, text weight
   and reader appearance were the same drawing three times. There is now one of
   each.
 
 Solid fills are reserved for shapes that would look thin stroked: the play
-triangle, list bullets, the half of the contrast circle, the word held between
-the guide rails.
+triangle, the stop square, a fader knob, list bullets, the half of the contrast
+circle, the marked line in Read, and the word held between the guide rails.
 
 ## Reviewing it
 

@@ -125,7 +125,7 @@ export const SettingsScreen = () => {
           {[
             ["Space", copy.play],
             ["← →", "Step a word"],
-            ["T", copy.text],
+            ["T", copy.read],
             ["C", copy.contents],
             ["A", copy.look],
             ["Esc", copy.close],
