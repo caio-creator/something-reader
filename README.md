@@ -12,6 +12,8 @@ No account. No cloud. No paywall on the files you already have.
 Got something? Drop it here.
 ```
 
+![The library](docs/images/library.png)
+
 ## What it is
 
 A desktop-and-mobile, open-source reading app. It opens in **Focus** — one word
@@ -25,6 +27,11 @@ assistant.
 reading sits around 200–300 WPM, regressions aid comprehension, and RSVP blocks
 them. What it does is keep you moving through a backlog you would otherwise not
 open. See `docs/research/speed-reading-research.md` for the citations.
+
+|  |  |
+|---|---|
+| ![Focus mode](docs/images/focus.png) | ![Text mode](docs/images/text.png) |
+| **Focus** — one word on its recognition point | **Text** — the whole thing, in Literata |
 
 ## Magic moment
 

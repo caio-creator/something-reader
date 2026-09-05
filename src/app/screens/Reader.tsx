@@ -9,6 +9,15 @@ import { VERSION } from "../version";
 
 const PACE_VALUES = Array.from({ length: 71 }, (_, i) => 100 + i * 10);
 
+/** A keydown target can be `document`, which has no `matches`. */
+export const isTyping = (event: KeyboardEvent): boolean => {
+  const target = event.target;
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || !!target.closest("input, textarea, select, [contenteditable]"))
+  );
+};
+
 type Mode = "focus" | "text";
 
 export const Reader = ({
@@ -34,8 +43,7 @@ export const Reader = ({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches("input, textarea, [contenteditable]")) return;
+      if (isTyping(event)) return;
       if (event.key === "Escape") {
         if (paceOpen) return;
         onClose();

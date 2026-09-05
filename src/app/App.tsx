@@ -9,7 +9,7 @@ import { useEngine } from "./hooks/useEngine";
 import { useLibrary } from "./hooks/useLibrary";
 import { Onboarding } from "./screens/Onboarding";
 import { ReadNow } from "./screens/ReadNow";
-import { Reader } from "./screens/Reader";
+import { isTyping, Reader } from "./screens/Reader";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { Things } from "./screens/Things";
 
@@ -47,8 +47,7 @@ const Shell = () => {
   useEffect(() => {
     if (doc || !onboarded) return;
     const onKey = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches("input, textarea, [contenteditable]")) return;
+      if (isTyping(event)) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === "1") setTab("things");
       if (event.key === "2") setTab("now");
