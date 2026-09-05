@@ -1087,8 +1087,8 @@
   background:
     linear-gradient(
       100deg,
-      color-mix(in srgb, var(--anchor) 26%, transparent) 0,
-      color-mix(in srgb, var(--anchor) 32%, transparent) 100%
+      color-mix(in srgb, var(--anchor) 20%, transparent) 0,
+      color-mix(in srgb, var(--anchor) 25%, transparent) 100%
     )
     0 58% / 100% 82% no-repeat;
   border-radius: 2px;
@@ -1103,24 +1103,25 @@
 
 .word.is-now {
   opacity: 1;
-  color: var(--accent-ink);
-  /* Ink pooling at the ends, and a band that does not fill the line box. */
+  /*
+   * No colour flip. Inverting the word to dark-on-amber is a contrast jump
+   * every 200ms, and the eye stops on it — friction exactly where reading
+   * should be smooth. A marker deposits ink; it does not restyle the letters.
+   * The current word is denser than the dried trail behind it, which is what a
+   * wet stroke actually looks like, and that is signal enough.
+   */
   background:
     linear-gradient(
       100deg,
-      var(--anchor) 0,
-      var(--anchor) 88%,
-      color-mix(in srgb, var(--anchor) 82%, transparent) 97%,
-      color-mix(in srgb, var(--anchor) 40%, transparent) 100%
+      color-mix(in srgb, var(--anchor) 52%, transparent) 0,
+      color-mix(in srgb, var(--anchor) 56%, transparent) 88%,
+      color-mix(in srgb, var(--anchor) 44%, transparent) 97%,
+      color-mix(in srgb, var(--anchor) 20%, transparent) 100%
     )
     0 58% / 100% 82% no-repeat;
   border-radius: 2px 9px 3px 8px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-}
-
-:root[data-theme="paper"] .word.is-now {
-  color: var(--surface);
 }
 
 /*
