@@ -33,6 +33,13 @@ export const useVoice = (
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [speaking, setSpeaking] = useState(false);
   const [pack, setPack] = useState<PackProgress | null>(null);
+  /*
+   * A voice that fails silently is a voice nobody can report. Every path
+   * that stops the narration for a reason puts the reason here, and the
+   * dock says it — "it loads and never speaks" should not be something a
+   * reader has to work out on their own.
+   */
+  const [error, setError] = useState<string | null>(null);
 
   // Read at speak time, not closed over: changing the voice mid-document must
   // not rebuild the callback chain that is already mid-sentence.
@@ -57,7 +64,16 @@ export const useVoice = (
     running.current = false;
     provider.stop();
     setSpeaking(false);
+    setPack(null);
   }, [provider]);
+
+  const fail = useCallback(
+    (reason: string) => {
+      setError(reason);
+      stop();
+    },
+    [stop],
+  );
 
   const speakFrom = useCallback(
     (index: number) => {
@@ -87,31 +103,37 @@ export const useVoice = (
           onEnd: () => {
             if (running.current) speakFrom(index + 1);
           },
-          onError: () => stop(),
+          onError: (reason) => fail(reason),
         },
       );
     },
-    [engine, narration, provider, stop],
+    [engine, fail, narration, provider, stop],
   );
 
   const start = useCallback(() => {
     if (!available || !narration || narration.segments.length === 0) return;
+    // First, and synchronously: this call is still inside the click.
+    provider.unlock?.();
+    setError(null);
     // The pack downloads on first play rather than behind a wall: the progress
     // shows in the dock, and the reader is already where they wanted to be.
-    void provider.prepare?.((progress) => setPack(progress.received >= progress.total ? null : progress));
+    void provider
+      .prepare?.((progress) => setPack(progress.received >= progress.total ? null : progress))
+      .then(() => setPack(null))
+      .catch((reason: unknown) => fail(reason instanceof Error ? reason.message : String(reason)));
     // The voice is the clock now; two clocks would fight over the position.
     engine.current?.pause();
     running.current = true;
     setSpeaking(true);
     const at = engine.current?.getSnapshot().position.charOffset ?? 0;
     speakFrom(narration.indexAtChar(at));
-  }, [available, engine, narration, speakFrom]);
+  }, [available, engine, fail, narration, provider, speakFrom]);
 
   // Closing the document, or leaving the reader, has to silence it. A voice
   // that outlives its screen is the worst bug this feature can have.
   useEffect(() => stop, [doc, stop]);
 
-  return { available, voices, speaking, pack, start, stop };
+  return { available, voices, speaking, pack, error, start, stop };
 };
 
 /**

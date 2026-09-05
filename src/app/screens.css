@@ -830,6 +830,10 @@
  * Stopped, this line names the mode the reader is in; running, it types.
  * It holds its height either way so the dock does not jump on play.
  */
+.dock-status .is-danger {
+  color: var(--danger);
+}
+
 .dock-status {
   min-height: 16px;
   padding: 0 var(--space-2);

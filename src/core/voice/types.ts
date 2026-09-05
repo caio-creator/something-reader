@@ -91,6 +91,15 @@ export interface TTSProvider {
   /** One-time setup — for a neural pack, the download. */
   prepare?(onProgress?: (progress: PackProgress) => void): Promise<void>;
   /**
+   * Called synchronously from the gesture that started playback.
+   *
+   * Audio output has to be opened while the browser still considers the click
+   * to be happening. A provider that synthesises first and opens its output
+   * afterwards opens it minutes later, with no activation left, and the
+   * context stays suspended — download finishes, nothing is ever heard.
+   */
+  unlock?(): void;
+  /**
    * Start work on a segment that has not been asked for yet.
    *
    * A model that takes about a second per second of speech cannot be asked for

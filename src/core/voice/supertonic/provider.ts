@@ -41,6 +41,13 @@ type Pending = {
 export class SupertonicProvider implements TTSProvider {
   readonly id = "supertonic";
 
+  /**
+   * How a worker gets made. Injectable so the message flow can be tested
+   * without ONNX, a browser or 409 MB — which is what it took to catch the
+   * bug where one play started four downloads.
+   */
+  constructor(private readonly createWorker: () => Worker = defaultWorker) {}
+
   private worker: Worker | null = null;
   private nextJob = 0;
   private readonly pending = new Map<number, Pending>();
@@ -81,6 +88,19 @@ export class SupertonicProvider implements TTSProvider {
     });
   }
 
+  /**
+   * Open the audio output now, while the click is still the current event.
+   *
+   * Synthesis takes seconds and the download can take minutes, so by the time
+   * there is a waveform the gesture is long gone; a context created then is
+   * born suspended and `resume()` will not be honoured. Opening it here costs
+   * nothing and is the difference between hearing the voice and not.
+   */
+  unlock(): void {
+    this.context ??= new AudioContext();
+    void this.context.resume();
+  }
+
   prefetch(segment: NarrationSegment, options: SpeakOptions): void {
     this.warmUp(segment, options);
   }
@@ -100,7 +120,7 @@ export class SupertonicProvider implements TTSProvider {
 
   stop(): void {
     this.generation += 1;
-    cancelAnimationFrame(this.ticker);
+    this.stopTicking();
     if (this.source) {
       this.source.onended = null;
       try {
@@ -158,9 +178,10 @@ export class SupertonicProvider implements TTSProvider {
     segment: NarrationSegment,
     handlers: SpeakHandlers,
   ): void {
+    // Normally opened by `unlock` on the gesture; this is the fallback for a
+    // caller that never called it.
     this.context ??= new AudioContext();
     const context = this.context;
-    // Autoplay policy parks the context until a gesture; play is one.
     void context.resume();
 
     const buffer = context.createBuffer(1, audio.samples.length, audio.sampleRate);
@@ -178,7 +199,7 @@ export class SupertonicProvider implements TTSProvider {
 
     source.onended = () => {
       if (generation !== this.generation) return;
-      cancelAnimationFrame(this.ticker);
+      this.stopTicking();
       this.warm.delete(segment.index);
       handlers.onEnd();
     };
@@ -200,6 +221,14 @@ export class SupertonicProvider implements TTSProvider {
     source.start();
   }
 
+  /** Guarded: stop() has to work wherever the provider is driven from. */
+  private stopTicking(): void {
+    if (this.ticker && typeof cancelAnimationFrame === "function") {
+      cancelAnimationFrame(this.ticker);
+    }
+    this.ticker = 0;
+  }
+
   private send(request: WorkerRequest): void {
     this.ensureWorker()?.postMessage(request);
   }
@@ -207,7 +236,7 @@ export class SupertonicProvider implements TTSProvider {
   private ensureWorker(): Worker | null {
     if (this.worker) return this.worker;
     if (typeof Worker === "undefined") return null;
-    const worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
+    const worker = this.createWorker();
 
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const message = event.data;
@@ -237,3 +266,6 @@ export class SupertonicProvider implements TTSProvider {
     return worker;
   }
 }
+
+const defaultWorker = (): Worker =>
+  new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });

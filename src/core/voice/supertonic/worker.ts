@@ -1,6 +1,7 @@
 import { loadModel, loadVoice } from "./assets";
 import type { VoiceId } from "./pack";
 import { synthesise, type Model, type Style } from "./inference";
+import { once } from "./once";
 import type { WorkerRequest, WorkerResponse } from "./protocol";
 
 /**
@@ -14,26 +15,47 @@ import type { WorkerRequest, WorkerResponse } from "./protocol";
  * them costs 409 MB and several seconds and must happen exactly once.
  */
 
-let model: Model | null = null;
-const voices = new Map<VoiceId, Style>();
 /** Cancelled jobs still finish computing; they just do not answer. */
 const abandoned = new Set<number>();
 
 const post = (message: WorkerResponse, transfer?: Transferable[]) =>
   (self as unknown as Worker).postMessage(message, transfer ?? []);
 
+/**
+ * Whoever asks first owns the progress.
+ *
+ * Play sends a load, two prefetches and a speak in the same tick, and the
+ * message handler is async, so all four arrive before any of them finishes.
+ * They must share one download — see `once` — which means only one of them can
+ * be the job the progress is reported against.
+ */
+let reportingTo: number | null = null;
+
+const getModel = once<Model>(() =>
+  loadModel(({ received, total }) => {
+    if (reportingTo !== null) post({ type: "progress", jobId: reportingTo, received, total });
+  }),
+);
+
 const ensureModel = async (jobId: number): Promise<Model> => {
-  if (model) return model;
-  model = await loadModel(({ received, total }) => post({ type: "progress", jobId, received, total }));
-  return model;
+  reportingTo ??= jobId;
+  try {
+    return await getModel();
+  } finally {
+    if (reportingTo === jobId) reportingTo = null;
+  }
 };
 
-const ensureVoice = async (voice: VoiceId): Promise<Style> => {
-  const held = voices.get(voice);
-  if (held) return held;
-  const style = await loadVoice(voice);
-  voices.set(voice, style);
-  return style;
+const voices = new Map<VoiceId, () => Promise<Style>>();
+
+const ensureVoice = (voice: VoiceId): Promise<Style> => {
+  // Same race, smaller file: four requests would otherwise fetch four styles.
+  let load = voices.get(voice);
+  if (!load) {
+    load = once(() => loadVoice(voice));
+    voices.set(voice, load);
+  }
+  return load();
 };
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {

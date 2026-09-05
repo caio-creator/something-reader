@@ -174,13 +174,15 @@ export const Reader = ({
       {snapshot && (
         <div className="dock">
           <p className="dock-status mono">
-            {voice.pack
-              ? `${copy.voiceGetting} · ${Math.round((voice.pack.received / voice.pack.total) * 100)}%`
-              : running
-                ? <Typing text={copy.readingNow} />
-                : mode === "focus"
-                  ? copy.focus
-                  : copy.read}
+            {voice.error
+              ? <span className="is-danger">{voice.error}</span>
+              : voice.pack
+                ? `${copy.voiceGetting} · ${Math.round((voice.pack.received / voice.pack.total) * 100)}%`
+                : running
+                  ? <Typing text={copy.readingNow} />
+                  : mode === "focus"
+                    ? copy.focus
+                    : copy.read}
           </p>
           <div className="dock-controls">
             <Button
