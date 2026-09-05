@@ -1,16 +1,31 @@
+import { docxImporter } from "./docx";
 import { epubImporter } from "./epub";
+import { htmlImporter } from "./html";
 import { markdownImporter } from "./markdown";
 import { pdfImporter } from "./pdf";
 import { textImporter } from "./text";
-import { ImportError, MAX_IMPORT_BYTES, type Importer } from "./types";
+import { ImportError, MAX_IMPORT_BYTES, type Importer, type ProgressFn } from "./types";
 import type { SomethingDocument } from "../model/types";
 
-export { ImportError } from "./types";
+export { ImportError, MAX_IMPORT_BYTES } from "./types";
+export type { ImportPhase, ProgressFn } from "./types";
 export { importPastedText } from "./text";
-export { importHtmlString } from "./html";
+export { importHtmlString, htmlToBlocks } from "./html";
+export { importUrl } from "./url";
 export { markdownToSections } from "./markdown";
 
-const importers: Importer[] = [markdownImporter, textImporter, pdfImporter, epubImporter];
+/** Order matters: the first importer whose sniff matches wins. */
+const importers: Importer[] = [
+  markdownImporter,
+  htmlImporter,
+  textImporter,
+  pdfImporter,
+  epubImporter,
+  docxImporter,
+];
+
+export const ACCEPTED_EXTENSIONS =
+  ".epub,.pdf,.docx,.md,.markdown,.txt,.html,.htm,text/plain,text/html,text/markdown,application/pdf,application/epub+zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export const sniffImporter = (name: string, mime: string): Importer | null => {
   const lower = name.toLowerCase();
@@ -22,6 +37,7 @@ export const importBytes = async (
   bytes: ArrayBuffer,
   name: string,
   mime = "",
+  onProgress?: ProgressFn,
 ): Promise<SomethingDocument> => {
   if (bytes.byteLength > MAX_IMPORT_BYTES) {
     throw new ImportError("too-large", "That file is larger than 80 MB.");
@@ -33,5 +49,6 @@ export const importBytes = async (
   if (!importer) {
     throw new ImportError("unsupported", "That format is not supported yet.");
   }
-  return importer.importFile(bytes, name);
+  onProgress?.("reading", 1);
+  return importer.importFile(bytes, name, onProgress);
 };

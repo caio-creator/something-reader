@@ -20,3 +20,10 @@ export const countWords = (text: string): number => {
   const parts = text.trim().split(/\s+/);
   return parts[0] === "" ? 0 : parts.length;
 };
+
+/** Counts exactly what `tokenizeDocument` will emit, so progress cannot drift. */
+export const countTokens = (text: string): number => (text.match(/[^\s]+/g) ?? []).length;
+
+export const sectionId = (order: number): string => `s${order}`;
+export const blockId = (order: number, index: number): string => `s${order}.b${index}`;
+export const documentIdFromHash = (sourceHash: string): string => `doc-${sourceHash.slice(0, 24)}`;

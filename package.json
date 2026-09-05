@@ -1,17 +1,21 @@
 {
   "name": "something-reader",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "license": "Apache-2.0",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "bun test tests"
+    "test": "bun test tests",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "dompurify": "^3.4.14",
     "jszip": "^3.10.1",
+    "mammoth": "^1.12.2",
     "markdown-it": "^14.1.0",
     "pdfjs-dist": "^5.4.149",
     "react": "^19.1.1",
@@ -19,9 +23,11 @@
   },
   "devDependencies": {
     "@types/markdown-it": "^14.1.2",
+    "@types/node": "^26.4.1",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.2",
+    "fake-indexeddb": "^6.2.5",
     "typescript": "^5.9.2",
     "vite": "^7.1.5"
   }

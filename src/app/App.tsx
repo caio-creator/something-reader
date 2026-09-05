@@ -261,11 +261,12 @@ export const App = () => {
             <ReadView
               doc={doc}
               activeBlockId={resume?.blockId}
-              onPosition={(blockId, sectionId) =>
+              onPosition={(blockId) =>
                 persistPosition({
                   documentId: doc.id,
-                  sectionId,
+                  charOffset: resume?.charOffset ?? 0,
                   blockId,
+                  blockHash: "",
                   tokenIndex: resume?.tokenIndex ?? 0,
                   updatedAt: Date.now(),
                 })
@@ -552,7 +553,7 @@ const ReadView = ({
 }: {
   doc: SomethingDocument;
   activeBlockId?: string;
-  onPosition: (blockId: string, sectionId: string) => void;
+  onPosition: (blockId: string) => void;
   onJump: () => void;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -569,8 +570,8 @@ const ReadView = ({
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (!visible) return;
         const el = visible.target as HTMLElement;
-        if (el.dataset.block && el.dataset.section) {
-          onPositionRef.current(el.dataset.block, el.dataset.section);
+        if (el.dataset.block) {
+          onPositionRef.current(el.dataset.block);
         }
       },
       { root, threshold: 0.4 },
