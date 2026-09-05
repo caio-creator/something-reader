@@ -59,6 +59,35 @@ describe("orp", () => {
     expect(parts.before + parts.pivot + parts.after).toBe("hi");
     expect(splitOrp("").pivot).toBe("");
   });
+
+  test("sits between a quarter and a third into the word", () => {
+    for (const word of ["words", "reading", "attention", "comprehension"]) {
+      const share = orpIndex(word) / word.length;
+      expect(share).toBeGreaterThan(0.15);
+      expect(share).toBeLessThan(0.36);
+    }
+  });
+
+  test("punctuation never becomes the anchor", () => {
+    // A comma is not a letter the eye recognises a word by.
+    expect(splitOrp("a,").pivot).toBe("a");
+    expect(splitOrp("12,483").pivot).toBe("2");
+    expect(splitOrp("—").pivot).toBe("—");
+  });
+
+  test("brackets and quotes do not drag the anchor off the letters", () => {
+    // The anchor should fall on the same letter with or without the wrapper.
+    expect(splitOrp("(regressions)").pivot).toBe(splitOrp("regressions").pivot);
+    expect(splitOrp('"Stop."').pivot).toBe(splitOrp("Stop").pivot);
+    expect(splitOrp("eye.").pivot).toBe(splitOrp("eye").pivot);
+  });
+
+  test("splitting is lossless for every shape", () => {
+    for (const word of ["a", "I", "the", "(regressions)", '"Stop."', "self-evident", "…", "12,483"]) {
+      const parts = splitOrp(word);
+      expect(parts.before + parts.pivot + parts.after).toBe(word);
+    }
+  });
 });
 
 describe("tokenize", () => {
