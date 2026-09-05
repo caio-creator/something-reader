@@ -1,0 +1,35 @@
+# Proprietary research material — never commit
+references/
+*.env
+.env.*
+!.env.example
+
+# Dependencies and build
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+.turbo/
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Test / coverage
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Logs
+*.log
+npm-debug.log*
+bun-debug.log*
+
+# Personal documents that may be imported during local use
+/tmp-imports/
