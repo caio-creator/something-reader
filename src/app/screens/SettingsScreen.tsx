@@ -11,6 +11,7 @@ import { useSettings } from "../providers/settings-context";
 import { formatBytes } from "../format";
 import { VERSION } from "../version";
 import { EMPHASES, FONTS, GUIDES, SIZES, THEMES } from "./AppearanceControls";
+import { applyUpdate, offlineReadiness, updateWaiting, type Readiness } from "../offline";
 
 const ENGINES = [
   { value: "natural", label: copy.voiceNatural },
@@ -55,6 +56,8 @@ export const SettingsScreen = () => {
    * in the reader keeps the choice where every other reading preference lives,
    * and means the reader's own button stays a switch and nothing more.
    */
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
+  const [updateReady, setUpdateReady] = useState(updateWaiting);
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [packInstalled, setPackInstalled] = useState(false);
   const [packProgress, setPackProgress] = useState<string | null>(null);
@@ -86,6 +89,14 @@ export const SettingsScreen = () => {
       if (session === downloadSession.current) setPackError(reason instanceof Error ? reason.message : "Could not prepare the voice.");
     } finally { if (session === downloadSession.current) setDownloading(false); }
   };
+
+  useEffect(() => {
+    let live = true;
+    void offlineReadiness().then((found) => { if (live) setReadiness(found); });
+    const onUpdate = () => setUpdateReady(true);
+    window.addEventListener("something:update", onUpdate);
+    return () => { live = false; window.removeEventListener("something:update", onUpdate); };
+  }, []);
 
   useEffect(() => {
     const provider: TTSProvider = natural ? naturalProvider : new SystemTTSProvider();
@@ -277,6 +288,24 @@ export const SettingsScreen = () => {
 
       <h2 className="group-title">{copy.data}</h2>
       <section className="group">
+        {/* A17: the app claimed to work offline with no way to know whether it
+            would. This is the service worker's own count, not a guess. */}
+        <Row
+          icon="drop"
+          label={copy.offline}
+          hint={
+            readiness === null
+              ? copy.offlineUnknown
+              : readiness.ready
+                ? copy.offlineReady
+                : `${copy.offlinePartial} · ${readiness.have}/${readiness.total}`
+          }
+        />
+        {updateReady && (
+          <Row icon="reset" label={copy.updateReady} hint={copy.updateBody}>
+            <Button variant="primary" onClick={applyUpdate}>{copy.updateApply}</Button>
+          </Row>
+        )}
         <Row icon="database" label={copy.storageUsed} hint={usage ? formatBytes(usage) : "—"} />
         <Row icon="trash" label={copy.clearAll} hint={confirming ? copy.clearAllBody : undefined}>
           {confirming ? (

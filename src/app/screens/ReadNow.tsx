@@ -17,6 +17,8 @@ type Props = {
   onUrl: (url: string) => void;
   onSample: () => void;
   onDismissError: () => void;
+  /** Stop an import that is still running. */
+  onCancel: () => void;
 };
 
 export const ReadNow = ({
@@ -28,6 +30,7 @@ export const ReadNow = ({
   onText,
   onUrl,
   onSample,
+  onCancel,
   onDismissError,
 }: Props) => {
   const [sheet, setSheet] = useState<"paste" | "link" | null>(null);
@@ -59,9 +62,14 @@ export const ReadNow = ({
         <p className="eyebrow">{state.busy ? copy.adding : copy.importLabel}</p>
 
         {state.busy ? (
-          <div className="progress" role="progressbar" aria-valuenow={Math.round(state.ratio * 100)}>
-            <span style={{ width: `${Math.max(6, state.ratio * 100)}%` }} />
-          </div>
+          <>
+            <div className="progress" role="progressbar" aria-valuenow={Math.round(state.ratio * 100)}>
+              <span style={{ width: `${Math.max(6, state.ratio * 100)}%` }} />
+            </div>
+            <div className="import-cancel">
+              <Button variant="ghost" onClick={onCancel}>{copy.cancelImport}</Button>
+            </div>
+          </>
         ) : (
           <>
             <div className="import-actions">

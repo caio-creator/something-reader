@@ -1543,3 +1543,14 @@
   text-transform: uppercase;
   color: var(--accent);
 }
+
+/* A way out of an import, beside the bar that is not moving. */
+.import-cancel {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-3);
+}
+
+.live .btn {
+  margin-left: var(--space-2);
+}

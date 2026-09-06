@@ -5,6 +5,7 @@ import "@ui/components/components.css";
 import "./screens.css";
 import { App } from "./App";
 import { voiceNotes } from "@core/voice/supertonic/diagnostics";
+import { registerServiceWorker } from "./offline";
 
 /*
  * The voice can fail in four places — download, initialization, synthesis,
@@ -17,9 +18,11 @@ import { voiceNotes } from "@core/voice/supertonic/diagnostics";
 (globalThis as unknown as { somethingVoiceNotes?: typeof voiceNotes }).somethingVoiceNotes = voiceNotes;
 
 // Only in a built app: in dev the service worker would serve stale modules.
-if (import.meta.env.PROD && "serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js");
+if (import.meta.env.PROD) {
+  registerServiceWorker(() => {
+    // Settings asks `updateWaiting()` when it renders. Nothing interrupts a
+    // reader mid-sentence to announce a new version of the page they are on.
+    window.dispatchEvent(new CustomEvent("something:update"));
   });
 }
 

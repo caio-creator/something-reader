@@ -3,6 +3,7 @@ import { assembleDocument, block, sectionFromBlocks } from "../model/build";
 import { hashBytes } from "../model/hash";
 import type { Block, Section } from "../model/types";
 import { decodeEntities, htmlToBlocks } from "./html";
+import { declaredSize, guardEntry } from "./archive";
 import {
   ImportError,
   MAX_ARCHIVE_ENTRIES,
@@ -127,8 +128,13 @@ export const epubImporter: Importer = {
       const file = zip.file(path);
       if (!file) continue;
 
+      // Refuse before inflating, not after: `async("string")` decompresses the
+      // whole entry, so checking the total afterwards means the damage is done.
+      const declared = declaredSize(file);
+      guardEntry("EPUB", declared, expanded);
+
       const html = await file.async("string");
-      expanded += html.length;
+      expanded += Math.max(declared, html.length);
       if (expanded > MAX_EXPANDED_BYTES) {
         throw new ImportError("too-large", "That EPUB expands to more than 300 MB.");
       }

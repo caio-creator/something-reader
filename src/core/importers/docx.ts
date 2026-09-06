@@ -1,21 +1,37 @@
+import JSZip from "jszip";
 import { assembleDocument, sectionFromBlocks } from "../model/build";
 import { hashBytes } from "../model/hash";
 import type { Section } from "../model/types";
 import { htmlToBlocks } from "./html";
 import { ImportError, type Importer } from "./types";
+import { declaredSize, guardArchive } from "./archive";
 
 const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 /**
- * mammoth converts the OOXML to semantic HTML, which then goes through the same
- * DOM-free extractor EPUB and articles use. Vite's `browser` field mapping swaps
- * mammoth's Node unzip for the browser one, so this runs in the worker.
+ * A DOCX is a zip, and mammoth will unpack all of it without being asked how
+ * big that is. A18 found no expansion limit here at all — EPUB had one and this
+ * had none, though they take the same kind of file from the same places.
+ *
+ * The archive's own directory is read first, so an unreasonable one is refused
+ * before mammoth is handed anything. Reading the directory does not decompress.
  */
+const refuseIfUnreasonable = async (bytes: ArrayBuffer): Promise<void> => {
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(bytes);
+  } catch {
+    throw new ImportError("corrupt", "That DOCX could not be opened.");
+  }
+  guardArchive("DOCX", Object.values(zip.files).map((entry) => ({ declared: declaredSize(entry) })));
+};
+
 export const docxImporter: Importer = {
   id: "docx",
   sniff: (name, mime) => /\.docx$/i.test(name) || mime === DOCX_MIME,
   importFile: async (bytes, name, onProgress) => {
     onProgress?.("parsing", 0.2);
+    await refuseIfUnreasonable(bytes);
     const mammoth = await import("mammoth");
 
     // mammoth ships two builds with different input contracts: the browser one

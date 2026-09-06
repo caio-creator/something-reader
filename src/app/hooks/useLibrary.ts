@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { importInWorker } from "@core/importers/client";
+import { cancelImports, importInWorker } from "@core/importers/client";
 import { ImportError, importPastedText, importUrl } from "@core/importers";
 import { markdownImporter } from "@core/importers/markdown";
 import { useStorage } from "../providers/storage-context";
@@ -94,5 +94,11 @@ export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
 
   const dismissError = useCallback(() => setState(IDLE), []);
 
-  return { items, state, refresh, addFile, addText, addUrl, addSample, remove, dismissError };
+  /** Stop whatever is being opened. The worker goes with it. */
+  const cancel = useCallback(() => {
+    cancelImports();
+    setState({ ...IDLE, error: "Import cancelled." });
+  }, []);
+
+  return { items, state, refresh, addFile, addText, addUrl, addSample, remove, cancel, dismissError };
 };

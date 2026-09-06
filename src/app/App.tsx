@@ -139,6 +139,7 @@ const Shell = () => {
           onText={library.addText}
           onUrl={library.addUrl}
           onSample={library.addSample}
+          onCancel={library.cancel}
           onDismissError={library.dismissError}
         />
       )}
@@ -172,6 +173,7 @@ const Shell = () => {
       {library.state.busy && (
         <p className="live" role="status" aria-live="polite">
           {copy.adding}
+          <Button variant="ghost" onClick={library.cancel}>{copy.cancelImport}</Button>
         </p>
       )}
     </div>

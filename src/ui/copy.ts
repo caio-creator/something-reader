@@ -13,6 +13,15 @@ export const copy = {
 
   continueReading: "Continue reading",
 
+  // offline
+  offline: "Works offline",
+  offlineReady: "Ready",
+  offlinePartial: "Preparing",
+  offlineUnknown: "Unknown",
+  updateReady: "A new version is ready",
+  updateApply: "Reload",
+  updateBody: "It waits until you say so, rather than reloading the page you are reading.",
+
   // import
   importLabel: "Add something",
   paste: "Paste",
@@ -30,6 +39,7 @@ export const copy = {
   drop: "Drop it anywhere.",
   hint: "EPUB, PDF, DOCX, Markdown, HTML or plain text. Files are read on this device.",
   adding: "Adding something…",
+  cancelImport: "Stop",
   ready: "Something new is ready.",
   add: "Add",
 
