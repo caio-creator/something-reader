@@ -60,8 +60,9 @@ export const isBlockedIp = (ip: string): boolean => {
   return false;
 };
 
+export type Pin = { address: string; family: number };
 /** Resolve once and return the address we will actually connect to. */
-const resolvePublic = async (target: URL): Promise<{ address: string; family: number }> => {
+export const resolvePublic = async (target: URL): Promise<Pin> => {
   if (target.protocol !== "http:" && target.protocol !== "https:") {
     throw new Error("Only http and https links can be imported.");
   }
@@ -79,10 +80,10 @@ const resolvePublic = async (target: URL): Promise<{ address: string; family: nu
   return candidates[0]!;
 };
 
-type Fetched = { status: number; location?: string; type: string; body: Buffer };
+export type Fetched = { status: number; location?: string; type: string; body: Buffer };
 
 /** One request, pinned to a pre-validated address so DNS cannot rebind. */
-const requestPinned = (target: URL, pin: { address: string; family: number }): Promise<Fetched> =>
+const requestPinned = (target: URL, pin: Pin): Promise<Fetched> =>
   new Promise((resolve, reject) => {
     const transport = target.protocol === "https:" ? https : http;
     const req = transport.request(
@@ -154,11 +155,27 @@ const decode = (body: Buffer, type: string): string => {
   }
 };
 
-const fetchArticle = async (raw: string): Promise<{ url: string; html: string }> => {
+/**
+ * Resolution and transport are parameters so the guard can be tested against a
+ * real server without pointing the test at anything real.
+ *
+ * The two halves have to be exercised apart: a controlled server has to live on
+ * 127.0.0.1, which is precisely the address the guard exists to refuse. Swapping
+ * the resolver proves the redirect, size and content-type rules against actual
+ * HTTP; swapping the transport proves a blocked address never reaches it.
+ */
+export type Deps = {
+  resolve?: (target: URL) => Promise<Pin>;
+  request?: (target: URL, pin: Pin) => Promise<Fetched>;
+};
+
+export const fetchArticle = async (raw: string, deps: Deps = {}): Promise<{ url: string; html: string }> => {
+  const resolve = deps.resolve ?? resolvePublic;
+  const send = deps.request ?? requestPinned;
   let target = new URL(raw);
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const pin = await resolvePublic(target);
-    const response = await requestPinned(target, pin);
+    const pin = await resolve(target);
+    const response = await send(target, pin);
 
     if (response.status >= 300 && response.status < 400) {
       if (!response.location) throw new Error("That link redirected nowhere.");

@@ -25,20 +25,16 @@ const openDb = (): Promise<IDBDatabase> => {
       if (!db.objectStoreNames.contains("blobs")) db.createObjectStore("blobs");
       if (!db.objectStoreNames.contains("positions")) db.createObjectStore("positions", { keyPath: "documentId" });
       if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings", { keyPath: "id" });
-      // Rebuild for both legacy v1 and v2 installations with an empty index.
-      const tx = req.transaction!;
-      const cursor = tx.objectStore("documents").openCursor();
-      cursor.onsuccess = () => {
-        const row = cursor.result;
-        if (!row) return;
-        const old = row.value as SomethingDocument;
-        const doc = { ...assembleDocument(old), id: old.id, importedAt: old.importedAt };
-        row.update(doc);
-        tx.objectStore("library").put(toLibraryRow(doc));
-        row.continue();
-      };
+      rebuildLibraryIndex(req.transaction!);
     };
+    let blocked = false;
     req.onsuccess = () => {
+      // Another tab held the old version open long enough for us to give up.
+      // The open still succeeds afterwards, and the handle would leak.
+      if (blocked) {
+        req.result.close();
+        return;
+      }
       req.result.onversionchange = () => {
         req.result.close();
         connection = null;
@@ -53,11 +49,60 @@ const openDb = (): Promise<IDBDatabase> => {
       reject(req.error);
     };
     req.onblocked = () => {
+      blocked = true;
       connection = null;
       reject(new Error("Close other Something tabs, then try again."));
     };
   });
   return connection;
+};
+
+/**
+ * A document is only rewritten when it is missing what the model derives.
+ *
+ * `assembleDocument` recomputes ids, offsets, fingerprints and counts from the
+ * block text, so running it on a document that already has them gives the same
+ * document back. That is exactly why it must not run on one that does: a saved
+ * position validates against `blockHash`, and rewriting rows to prove they did
+ * not change is a risk taken for nothing.
+ */
+const isAssembled = (doc: SomethingDocument): boolean =>
+  Array.isArray(doc.sections)
+  && typeof doc.tokenCount === "number" && doc.tokenCount > 0
+  && typeof doc.charLength === "number"
+  && doc.sections.every((section) =>
+    typeof section.id === "string" && section.id.length > 0
+    && Array.isArray(section.blocks)
+    && section.blocks.every((b) => typeof b.id === "string" && b.id.length > 0 && typeof b.hash === "string" && b.hash.length > 0));
+
+/**
+ * Put back the index the v2 upgrade forgot to fill.
+ *
+ * v1 had no `library` store; the v2 upgrade created one and left it empty while
+ * `listLibrary` switched to reading only that. Everything imported before it
+ * stayed on disk and disappeared from the app. Both cases are repaired the same
+ * way — read `documents`, write the rows — and running it again changes
+ * nothing, which matters because a repaired v2 must survive meeting it twice.
+ *
+ * Exported for the migration tests; the upgrade transaction is the only caller
+ * in the app.
+ */
+export const rebuildLibraryIndex = (tx: IDBTransaction): void => {
+  const cursor = tx.objectStore("documents").openCursor();
+  cursor.onsuccess = () => {
+    const row = cursor.result;
+    if (!row) return;
+    const old = row.value as SomethingDocument;
+    const doc = isAssembled(old)
+      ? old
+      : { ...assembleDocument(old), id: old.id, importedAt: old.importedAt };
+    if (doc !== old) row.update(doc);
+    tx.objectStore("library").put(toLibraryRow(doc));
+    row.continue();
+  };
+  // Aborting the upgrade is the right outcome: a half-built index would look
+  // like a library with some of the books missing, which is the bug being fixed.
+  cursor.onerror = () => tx.abort();
 };
 
 const txDone = (tx: IDBTransaction): Promise<void> =>

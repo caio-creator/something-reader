@@ -44,6 +44,42 @@ const providerWith = () => {
 const options = { rate: 1, lang: "pt", voiceId: "F1" };
 
 describe("what the worker is asked for", () => {
+  /*
+   * A10: the warm cache was keyed on the segment index alone, so the same
+   * sentence asked for in another voice, another language or another speed
+   * replayed the first answer. The probe caught it; nothing stopped it coming
+   * back.
+   */
+  test("a different voice is a different sentence", () => {
+    const { provider, worker } = providerWith();
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "F1" });
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "M2" });
+    const speaks = worker.seen.filter((r) => r.type === "speak");
+    expect(speaks).toHaveLength(2);
+    expect(speaks.map((r) => r.type === "speak" && r.voice)).toEqual(["F1", "M2"]);
+  });
+
+  test("a different speed is a different sentence", () => {
+    const { provider, worker } = providerWith();
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "F1" });
+    provider.prefetch(segment(1), { rate: 2, lang: "pt", voiceId: "F1" });
+    expect(worker.seen.filter((r) => r.type === "speak")).toHaveLength(2);
+  });
+
+  test("a different language is a different sentence", () => {
+    const { provider, worker } = providerWith();
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "F1" });
+    provider.prefetch(segment(1), { rate: 1, lang: "en", voiceId: "F1" });
+    expect(worker.seen.filter((r) => r.type === "speak")).toHaveLength(2);
+  });
+
+  test("the same sentence in the same voice is asked for once", () => {
+    const { provider, worker } = providerWith();
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "F1" });
+    provider.prefetch(segment(1), { rate: 1, lang: "pt", voiceId: "F1" });
+    expect(worker.seen.filter((r) => r.type === "speak")).toHaveLength(1);
+  });
+
   test("prefetching the same segment twice does not ask twice", () => {
     const { provider, worker } = providerWith();
     provider.prefetch(segment(3), options);

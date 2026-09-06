@@ -34,6 +34,39 @@ describe("ssrf address guard", () => {
     expect(isBlockedIp("::ffff:8.8.8.8")).toBe(false);
   });
 
+  /*
+   * The form that actually reached the guard. Nothing hands it the dotted
+   * spelling above: `new URL('http://[::ffff:127.0.0.1]/').hostname` is
+   * `[::ffff:7f00:1]`, and that is what `resolvePublic` classifies. The dotted
+   * cases passed before this was fixed, which is why they proved nothing.
+   */
+  test("blocks the hexadecimal spelling a URL actually produces", () => {
+    const through = (input: string) => new URL(input).hostname.replace(/^\[|\]$/g, "");
+    for (const input of [
+      "http://[::ffff:127.0.0.1]/",
+      "http://[::ffff:169.254.169.254]/",
+      "http://[::ffff:192.168.1.1]/",
+      "http://[::ffff:10.0.0.1]/",
+      "http://[::ffff:172.16.0.1]/",
+    ]) {
+      const hostname = through(input);
+      expect(hostname).not.toContain(".");
+      expect(isBlockedIp(hostname)).toBe(true);
+    }
+  });
+
+  test("blocks the fully expanded mapped form too", () => {
+    expect(isBlockedIp("0:0:0:0:0:ffff:7f00:1")).toBe(true);
+    expect(isBlockedIp("::ffff:7f00:1")).toBe(true);
+    expect(isBlockedIp("::ffff:a9fe:a9fe")).toBe(true);
+    expect(isBlockedIp("::ffff:c0a8:101")).toBe(true);
+  });
+
+  test("still allows a public address wearing the same costume", () => {
+    expect(isBlockedIp("::ffff:808:808")).toBe(false);
+    expect(isBlockedIp(new URL("http://[::ffff:8.8.8.8]/").hostname.replace(/^\[|\]$/g, ""))).toBe(false);
+  });
+
   test("allows ordinary public IPv6", () => {
     expect(isBlockedIp("2606:4700:4700::1111")).toBe(false);
   });
