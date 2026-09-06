@@ -44,6 +44,14 @@ const isBlockedIpv4 = (ip: string): boolean => {
 export const isBlockedIp = (ip: string): boolean => {
   if (net.isIPv4(ip)) return isBlockedIpv4(ip);
   const lower = ip.toLowerCase().split("%")[0]!;
+  // URL canonicalization converts mapped IPv4 to two hexadecimal groups.
+  const canonical = (() => { try { return new URL(`http://[${lower}]/`).hostname.slice(1, -1); } catch { return lower; } })();
+  const hexMapped = canonical.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+  if (hexMapped) {
+    const high = parseInt(hexMapped[1]!, 16);
+    const low = parseInt(hexMapped[2]!, 16);
+    return isBlockedIpv4(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`);
+  }
   if (lower === "::1" || lower === "::") return true;
   if (/^f[cd]/.test(lower)) return true; // unique local
   if (/^fe[89ab]/.test(lower)) return true; // link-local
