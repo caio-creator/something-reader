@@ -587,8 +587,15 @@
   position: absolute;
   right: 0;
   top: calc(100% + var(--space-2));
-  max-height: min(300px, 50vh);
+  /*
+   * Tall enough that the lists this app actually has — four typefaces, eleven
+   * voices — open whole. When a viewport really is too short, it scrolls
+   * without a scrollbar: a grey track inside a rounded translucent popover was
+   * the ugliest thing on the screen, and it sat over the corner radius.
+   */
+  max-height: min(620px, var(--menu-room, calc(100vh - var(--space-6))));
   overflow-y: auto;
+  scrollbar-width: none;
   z-index: 50;
   min-width: 230px;
   padding: var(--space-2);
@@ -601,7 +608,10 @@
   box-shadow: var(--shadow);
   transform-origin: top right;
   animation: menu-in var(--dur-pop) var(--ease);
-  scrollbar-width: thin;
+}
+
+.menu-list::-webkit-scrollbar {
+  display: none;
 }
 
 .menu-list.is-up {
@@ -636,10 +646,18 @@
   transition: background-color var(--enter);
 }
 
-@media (hover: hover) {
-  .menu-list button:hover {
-    background: var(--surface-2);
-  }
+/*
+ * Focus is on the list, so the current row draws itself. One highlight, in the
+ * design's own language: the browser's ring on a row it had focused sat on top
+ * of this and read as a second, competing selection.
+ */
+.menu-list:focus,
+.menu-list:focus-visible {
+  outline: none;
+}
+
+.menu-list button.is-active {
+  background: var(--surface-2);
 }
 
 .menu-check {

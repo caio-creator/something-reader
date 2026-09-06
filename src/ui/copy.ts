@@ -11,6 +11,8 @@ export const copy = {
   now: "Add",
   settings: "Settings",
 
+  continueReading: "Continue reading",
+
   // import
   importLabel: "Add something",
   paste: "Paste",
@@ -19,6 +21,9 @@ export const copy = {
   link: "Web link",
   linkTitle: "Add a link",
   linkPlaceholder: "https://",
+  /* Everything else in Something happens on this device. This does not, and
+     saying so is the difference between a promise and a slogan. */
+  linkPrivacy: "Something requests this page from the site, then keeps the text here.",
   openFile: "Open file",
   sample: "Try something",
   or: "or",
@@ -73,7 +78,9 @@ export const copy = {
   listenOff: "Stop listening",
   listenNone: "No voice on this device",
   voice: "Voice",
-  voiceBody: "Read out loud, using the voices already on this device. Nothing is downloaded and nothing is sent anywhere.",
+  /* Two engines with different costs sit under this. The old line promised
+     nothing is downloaded, one line above the 400 MB download. */
+  voiceBody: "Read out loud. Choose a voice already installed on this device, or download Something Voice once and keep it.",
   voiceNone: "This device has no speech voices installed.",
   voiceDefault: "Default voice",
   voiceRate: "Voice pace",

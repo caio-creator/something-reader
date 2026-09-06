@@ -4,6 +4,7 @@ import { Button, FocusWord, Sheet } from "@ui/components";
 import { copy } from "@ui/copy";
 import type { ImportState } from "../hooks/useLibrary";
 import { VERSION } from "../version";
+import { capabilities } from "@core/importers/capabilities";
 
 type Props = {
   state: ImportState;
@@ -67,7 +68,7 @@ export const ReadNow = ({
               <Button variant="stack" icon="paste" onClick={() => setSheet("paste")}>
                 {copy.paste}
               </Button>
-              {import.meta.env.DEV && <Button variant="stack" icon="link" onClick={() => setSheet("link")}>
+              {capabilities.canImportUrl && <Button variant="stack" icon="link" onClick={() => setSheet("link")}>
                 {copy.link}
               </Button>}
               <Button variant="stack" icon="file" onClick={() => fileInput.current?.click()}>

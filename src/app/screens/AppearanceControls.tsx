@@ -30,10 +30,10 @@ export const SIZES = [
   { value: "l" as TextSize, label: copy.sizeL },
 ];
 export const FONTS = [
-  { value: "sans" as FontChoice, label: copy.fontSans, hint: "Inter" },
-  { value: "serif" as FontChoice, label: copy.fontSerif, hint: "Literata" },
-  { value: "mono" as FontChoice, label: copy.fontMono, hint: "JetBrains Mono" },
-  { value: "dyslexic" as FontChoice, label: copy.fontDyslexic, hint: "Wider, weighted letterforms" },
+  { value: "sans" as FontChoice, label: copy.fontSans, hint: "Inter", preview: "var(--font-ui)" },
+  { value: "serif" as FontChoice, label: copy.fontSerif, hint: "Literata", preview: "var(--font-read)" },
+  { value: "mono" as FontChoice, label: copy.fontMono, hint: "JetBrains Mono", preview: "var(--font-mono)" },
+  { value: "dyslexic" as FontChoice, label: copy.fontDyslexic, hint: "Wider, weighted letterforms", preview: "var(--font-dyslexic)" },
 ];
 
 /**

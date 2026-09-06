@@ -1,11 +1,12 @@
 import { Icon, type IconName } from "./Icon";
+import { copy } from "../copy";
 
 export type TabKey = "things" | "now" | "settings";
 
 const TABS: { key: TabKey; icon: IconName; active: IconName; label: string }[] = [
-  { key: "things", icon: "things", active: "things-solid", label: "Things" },
-  { key: "now", icon: "read", active: "read-solid", label: "Read now" },
-  { key: "settings", icon: "settings", active: "settings-solid", label: "Settings" },
+  { key: "things", icon: "things", active: "things-solid", label: copy.things },
+  { key: "now", icon: "read", active: "read-solid", label: copy.now },
+  { key: "settings", icon: "settings", active: "settings-solid", label: copy.settings },
 ];
 
 /**

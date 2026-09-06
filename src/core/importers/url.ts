@@ -30,10 +30,9 @@ export const importUrl = async (rawUrl: string): Promise<SomethingDocument> => {
     payload = { url: body.url ?? target.toString(), html: body.html };
   } catch (err) {
     if (err instanceof ImportError) throw err;
-    throw new ImportError(
-      "network",
-      "Link import needs the local server. Run `bun run dev` and try again.",
-    );
+    // Screens gate this on `capabilities.canImportUrl`, so reaching here means
+    // the request itself failed, not that the feature is missing.
+    throw new ImportError("network", "Could not reach that link. Check the address, or paste the text instead.");
   }
 
   const [{ Readability }, DOMPurify] = await Promise.all([

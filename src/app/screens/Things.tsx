@@ -3,6 +3,7 @@ import { ActionMenu, Button, EmptyState, Icon, Ring, Sheet } from "@ui/component
 import { copy } from "@ui/copy";
 import type { LibraryItem } from "@core/storage/types";
 import { estimateMs, timeLeft } from "../format";
+import { capabilities } from "@core/importers/capabilities";
 
 export const Things = ({
   items,
@@ -33,7 +34,13 @@ export const Things = ({
     );
   }, [items, query]);
 
-  const last = items.find((item) => item.id === continueId);
+  /*
+   * The document you were last in leads the list instead of being repeated
+   * above it. A second copy in its own panel said the same thing twice and in
+   * a shape nothing else on the screen uses.
+   */
+  const last = query ? undefined : filtered.find((item) => item.id === continueId);
+  const ordered = last ? [last, ...filtered.filter((item) => item.id !== last.id)] : filtered;
 
   return (
     <main className="things" id="main">
@@ -45,7 +52,7 @@ export const Things = ({
             trigger={<span className="add-button"><Icon name="close" size={20} className="add-glyph" /></span>}
             actions={[
               { id: "paste", label: copy.paste, icon: "paste", onSelect: () => onAdd("paste") },
-              ...(import.meta.env.DEV ? [{ id: "link", label: copy.link, icon: "link" as const, onSelect: () => onAdd("link") }] : []),
+              ...(capabilities.canImportUrl ? [{ id: "link", label: copy.link, icon: "link" as const, onSelect: () => onAdd("link") }] : []),
               { id: "file", label: copy.openFile, icon: "file", onSelect: () => onAdd("file") },
               { id: "sample", label: copy.sample, icon: "sample", onSelect: () => onAdd("sample") },
             ]}
@@ -64,7 +71,6 @@ export const Things = ({
         </div>
       </header>
 
-      {last && !query && <section className="continue-reading"><p>Continue reading</p><Button onClick={() => onOpen(last.id)}>{last.title}</Button></section>}
       {items.length === 0 ? (
         <div className="things-empty">
           <EmptyState icon="info" title={copy.emptyWhy} body={copy.emptyWhyBody} />
@@ -81,14 +87,16 @@ export const Things = ({
         </div>
       ) : (
         <ul className="thing-list">
-          {filtered.map((item) => {
+          {ordered.map((item) => {
             const done = item.progress >= 0.98;
             const left = estimateMs(Math.max(0, item.tokenCount - item.tokenIndex), wpm);
+            const continuing = item.id === last?.id;
             return (
-              <li key={item.id} className="thing">
+              <li key={item.id} className={continuing ? "thing is-continue" : "thing"}>
                 <button type="button" className="thing-open" onClick={() => onOpen(item.id)}>
                   <Ring progress={item.progress} done={done} />
                   <span className="thing-copy">
+                    {continuing && <span className="thing-continue mono">{copy.continueReading}</span>}
                     <span className="thing-title">{item.title}</span>
                     <span className="thing-meta mono">
                       {done ? copy.finished : timeLeft(left)}
