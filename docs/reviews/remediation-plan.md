@@ -1,6 +1,32 @@
 # Something.reader — plano de correções após auditoria
 
-Base: [auditoria de 05–06/09/2026](app-audit.md), commit `f75539f`. Este documento especifica a próxima execução; as correções abaixo ainda não foram implementadas. Esforço relativo: P = até um conjunto pequeno de mudanças; M = vários componentes/contratos; G = integração com múltiplos cenários. Não são estimativas de prazo.
+Base: [auditoria de 05–06/09/2026](app-audit.md), commit `f75539f`. Este documento especifica a execução.
+
+> **Estado em 06/09/2026.** As cinco entregas foram executadas. O que mudou em relação à auditoria:
+>
+> | Achado | Estado | Onde |
+> | --- | --- | --- |
+> | A01 posição perdida em recarga | corrigido, com teste | `core/storage/checkpoint.ts`, `tests/checkpoint.test.ts`, E2E de recarga durante leitura |
+> | A02 biblioteca invisível após upgrade | corrigido, com teste | `rebuildLibraryIndex`, `tests/migration.test.ts` |
+> | A03 guarda de IP em IPv6 mapeado | corrigido, com teste | `vite-plugin-fetch.ts`, `tests/fetch-guard.test.ts`, `tests/fetch-proxy.test.ts` |
+> | A04 voz sem reprodução verificável | causa provável corrigida; **áudio ainda não confirmado** | entrada WebGPU recebia o binário `jsep` em vez do `asyncify`; diagnóstico por etapa em `diagnostics.ts` |
+> | A05 vozes remotas | corrigido, com teste | `core/voice/system.ts`, `tests/voice-system.test.ts` |
+> | A06 falha de storage sem recuperação | corrigido | estado de erro e retry em `App`, `SettingsProvider`, `useEngine`, `useLibrary` |
+> | A07–A15 leitura, interface, teclado | corrigidos | ver commits `feat(ui)`, `feat(a11y)`, `fix(ui)` |
+> | A16 link oferecido onde não funciona | corrigido | `core/importers/capabilities.ts` |
+> | A17 instalação offline parcial | corrigido | manifesto versionado do shell, atualização controlada, prontidão em Settings |
+> | A18 limites de importação tardios | corrigido, com teste | `core/importers/archive.ts`, `tests/archive-limits.test.ts`, cancelamento e timeout |
+> | A19 documentação divergente | corrigido | README, MVP e roadmap com tamanhos medidos |
+>
+> A suíte foi de 134 para 181 testes unitários, mais 40 testes de navegador em Chromium e WebKit
+> (`bun run test:e2e`), que não existiam. Esses testes encontraram um defeito que a auditoria não
+> tinha visto: o sheet ficava sob a tab bar num telefone de 664 px, deixando a ação principal
+> impossível de tocar.
+>
+> **Continua em aberto:** confirmação de áudio da Something Voice, um aparelho iOS real, e a
+> primeira instalação offline medida num telefone. Nada disso é aprovação de release.
+
+Esforço relativo: P = até um conjunto pequeno de mudanças; M = vários componentes/contratos; G = integração com múltiplos cenários. Não são estimativas de prazo.
 
 ## 1. Proteger dados e recuperar falhas — primeira entrega
 
