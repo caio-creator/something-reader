@@ -927,6 +927,37 @@
   color: var(--text-2);
 }
 
+.empty-action {
+  flex: none;
+}
+
+/*
+ * An icon, a paragraph and a button do not fit across a phone.
+ *
+ * They did not fit before either: the copy has `min-width: 0` so it may shrink,
+ * and with a 230px button beside it the browser shrank it to *zero* — the text
+ * kept painting out of its own box, straight across the button. This is the
+ * first surface a new reader sees, and it read as a bug because it was one.
+ *
+ * Stacked, the paragraph gets the width and the action gets its own line.
+ */
+@media (max-width: 560px) {
+  .empty-state {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .empty-action {
+    grid-column: 1 / -1;
+  }
+
+  .empty-action > .btn {
+    width: 100%;
+  }
+}
+
 /* ---------- action menu ---------- */
 
 .action-menu.align-start .menu-list {

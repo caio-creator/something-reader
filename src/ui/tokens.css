@@ -219,7 +219,10 @@
   --enter: var(--dur-control) var(--ease);
   --exit: var(--dur-pop-out) var(--ease);
 
-  --tabbar-space: 96px;
+  /* The bar's own height plus the room it keeps below itself. On a phone with
+     a home indicator that room is the safe area, so the clearance has to grow
+     with it — 96px alone left the last rows under the bar. */
+  --tabbar-space: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 /* A finer pointer can carry a smaller standard control. */

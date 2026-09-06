@@ -25,6 +25,6 @@ export const EmptyState = ({
       <strong>{title}</strong>
       {body && <span>{body}</span>}
     </div>
-    {action}
+    {action && <div className="empty-action">{action}</div>}
   </div>
 );

@@ -57,7 +57,7 @@
 .things,
 .settings {
   min-height: 100dvh;
-  padding: var(--space-5) var(--space-4) var(--tabbar-space);
+  padding: calc(var(--space-5) + env(safe-area-inset-top, 0px)) var(--space-4) var(--tabbar-space);
 }
 
 @media (min-width: 700px) {
@@ -485,6 +485,15 @@
 .row-head .row-label {
   flex: 1;
   min-width: 0;
+  /* Without this the label shrank to zero width and its text carried on
+     across the hint beside it — "Natural" printed through "407 MB". */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-head .row-hint {
+  flex: none;
 }
 
 .row-actions {
