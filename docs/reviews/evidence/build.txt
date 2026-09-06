@@ -1,0 +1,46 @@
+$ tsc --noEmit && vite build
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 551 modules transformed.
+rendering chunks...
+[plugin vite:reporter]
+(!) /Users/caio_almeida/dev/something-reader/src/core/importers/markdown.ts is dynamically imported by /Users/caio_almeida/dev/something-reader/src/core/importers/text.ts but also statically imported by /Users/caio_almeida/dev/something-reader/src/app/hooks/useLibrary.ts, /Users/caio_almeida/dev/something-reader/src/core/importers/index.ts, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/assets/pdf.worker.min-LYcgTeM6.js                                 0.07 kB
+dist/index.html                                                        1.29 kB │ gzip:     0.58 kB
+dist/assets/jetbrains-mono-vietnamese-wght-normal-Bt-aOZkq.woff2       7.50 kB
+dist/assets/jetbrains-mono-greek-wght-normal-Bw9x6K1M.woff2            9.00 kB
+dist/assets/literata-cyrillic-ext-wght-normal-CGKlZYBf.woff2           9.73 kB
+dist/assets/inter-vietnamese-wght-normal-CBcvBZtf.woff2               10.25 kB
+dist/assets/inter-greek-ext-wght-normal-DlzME5K_.woff2                11.23 kB
+dist/assets/literata-vietnamese-wght-normal-LcSrhZ7T.woff2            11.41 kB
+dist/assets/jetbrains-mono-cyrillic-wght-normal-D73BlboJ.woff2        12.11 kB
+dist/assets/literata-greek-ext-wght-normal-e3e57Shi.woff2             12.19 kB
+dist/assets/jetbrains-mono-latin-ext-wght-normal-DBQx-q_a.woff2       15.20 kB
+dist/assets/inter-cyrillic-wght-normal-DqGufNeO.woff2                 18.75 kB
+dist/assets/inter-greek-wght-normal-CkhJZR-_.woff2                    19.00 kB
+dist/assets/literata-greek-wght-normal-CO1l-giJ.woff2                 19.25 kB
+dist/assets/inter-cyrillic-ext-wght-normal-BOeWTOD4.woff2             25.96 kB
+dist/assets/literata-cyrillic-wght-normal-DLqwHbi6.woff2              28.07 kB
+dist/assets/jetbrains-mono-latin-wght-normal-B9CIFXIH.woff2           40.40 kB
+dist/assets/literata-latin-ext-wght-normal-BnEbWgdZ.woff2             42.66 kB
+dist/assets/inter-latin-wght-normal-Dx4kXJAl.woff2                    48.26 kB
+dist/assets/literata-latin-wght-normal-DLxlUchJ.woff2                 52.50 kB
+dist/assets/inter-latin-ext-wght-normal-DO1Apj_S.woff2                85.07 kB
+dist/assets/opendyslexic-latin-400-normal-nUhe5EwG.woff2             115.28 kB
+dist/assets/opendyslexic-latin-400-normal-Cv3YY6GF.woff              128.78 kB
+dist/assets/worker-qI0_2TBu.js                                       215.12 kB
+dist/assets/index-CAZGGxuo.js                                        406.51 kB
+dist/assets/worker-BHSQP98X.js                                       415.17 kB
+dist/assets/pdf.worker.min-iDqQPrd3.mjs                            1,232.30 kB
+dist/assets/ort-wasm-simd-threaded.jsep-D-icqfN-.wasm             27,797.17 kB │ gzip: 6,576.65 kB
+dist/assets/latin-400-Bigd7ufU.css                                     0.24 kB │ gzip:     0.17 kB
+dist/assets/index-CMWbCz2c.css                                        51.47 kB │ gzip:    11.97 kB
+dist/assets/pdf.worker.min-B7BB9YL5.js                                 0.07 kB │ gzip:     0.09 kB
+dist/assets/purify.es-4eNOHKSq.js                                     28.74 kB │ gzip:    11.02 kB
+dist/assets/index-BSy7scbG.js                                         34.68 kB │ gzip:    11.80 kB
+dist/assets/index-Yp0WDCcC.js                                        406.76 kB │ gzip:   102.36 kB
+dist/assets/pdf-B75MOh95.js                                          415.93 kB │ gzip:   123.51 kB
+dist/assets/index-BX48L2i4.js                                        491.65 kB │ gzip:   170.62 kB
+✓ built in 5.39s

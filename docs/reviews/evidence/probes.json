@@ -1,0 +1,49 @@
+{
+  "ipv4MappedIpv6": [
+    {
+      "input": "http://[::ffff:127.0.0.1]/",
+      "normalized": "::ffff:7f00:1",
+      "blocked": false,
+      "expected": true
+    },
+    {
+      "input": "http://[::ffff:169.254.169.254]/",
+      "normalized": "::ffff:a9fe:a9fe",
+      "blocked": false,
+      "expected": true
+    },
+    {
+      "input": "http://[::ffff:192.168.1.1]/",
+      "normalized": "::ffff:c0a8:101",
+      "blocked": false,
+      "expected": true
+    }
+  ],
+  "migration": {
+    "documentRetained": true,
+    "visibleLibraryItems": 0,
+    "expectedVisibleItems": 1
+  },
+  "voiceCache": {
+    "requestsBeforeStop": [
+      {
+        "type": "speak",
+        "jobId": 0,
+        "text": "olá mundo",
+        "lang": "pt",
+        "voice": "F1",
+        "speed": 1,
+        "steps": 8
+      }
+    ],
+    "expectedSynthesisRequests": 2
+  },
+  "voiceCancellation": {
+    "cancelMessages": 0
+  },
+  "paperAnchorContrast": 1.9645562376900545,
+  "voiceSize": {
+    "advertisedBytes": 409000000,
+    "manifestBytes": 426490000
+  }
+}

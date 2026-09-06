@@ -1,0 +1,166 @@
+bun test v1.3.10 (30e609e0)
+
+tests/formats.test.ts:
+(pass) epub importer > reads metadata, spine order and the real table of contents [31.46ms]
+(pass) epub importer > keeps block kinds through the DOM-free extractor [3.83ms]
+(pass) epub importer > ids are deterministic and offsets ascend [5.98ms]
+(pass) epub importer > refuses a zip that is not an epub [1.72ms]
+(pass) docx importer > converts to blocks and splits on headings [232.62ms]
+(pass) docx importer > refuses something that is not a docx [2.01ms]
+
+tests/model.test.ts:
+(pass) deterministic ids > the same content produces the same document and block ids [0.47ms]
+(pass) deterministic ids > char offsets are ascending and match the text projection
+(pass) deterministic ids > token count matches what the tokenizer emits
+(pass) deterministic ids > hashText ignores whitespace and case but not words
+(pass) position reconciliation > a null position starts at the beginning
+(pass) position reconciliation > re-importing the identical file lands on the same token [0.76ms]
+(pass) position reconciliation > text inserted earlier in the book does not move the anchor [0.35ms]
+(pass) position reconciliation > a stale token index is rejected when the block hash no longer matches [0.02ms]
+(pass) position reconciliation > tokenIndexAtChar finds the last token at or before an offset [0.26ms]
+
+tests/once.test.ts:
+(pass) once > concurrent callers share one run [0.35ms]
+(pass) once > the resolved value is reused afterwards
+(pass) once > a failure does not poison the next attempt [0.58ms]
+
+tests/engine.test.ts:
+(pass) orp > short words pivot near the start [2.04ms]
+(pass) orp > the pivot never runs off the end of a word [0.22ms]
+(pass) orp > sits between a quarter and a third into the word [0.20ms]
+(pass) orp > punctuation never becomes the anchor
+(pass) orp > brackets and quotes do not drag the anchor off the letters [0.31ms]
+(pass) orp > splitting is lossless for every shape [0.08ms]
+(pass) tokenize > marks sentence ends and paragraph starts [0.30ms]
+(pass) timing > sentence end lasts longer than a mid word
+(pass) timing > weight is pace-independent; only the multiplier scales
+(pass) engine > steps and seeks without a real rAF loop [1.83ms]
+(pass) engine > play advances through tokens and stops at the end [0.95ms]
+(pass) engine > pause stops the loop and play resumes from the same token [0.45ms]
+(pass) engine > toggle mirrors play and pause [0.09ms]
+(pass) engine > playing again after the end restarts from the top [0.52ms]
+(pass) engine > chunk size groups tokens and steps by the chunk [0.54ms]
+(pass) engine > setWpm changes pace without losing the position [0.16ms]
+(pass) engine > timecodes shrink as you advance and scale with pace [0.12ms]
+(pass) engine > seekToChar lands on the token at that offset [0.21ms]
+(pass) engine > the emitted position carries the offset and block fingerprint [0.06ms]
+(pass) engine > an engine resumes from a saved position
+
+tests/html.test.ts:
+(pass) html extractor > reads headings, paragraphs, lists, quotes and code [0.40ms]
+(pass) html extractor > falls back to the head title [0.07ms]
+(pass) html extractor > drops chrome and never reads markup out of a script
+(pass) html extractor > handles nested skip tags without swallowing the rest [0.26ms]
+(pass) html extractor > an outer block wins over nested ones
+(pass) html extractor > void and self-closing tags do not open a block [0.15ms]
+(pass) html extractor > br becomes a space [0.15ms]
+(pass) html extractor > decodes named, decimal and hex entities and leaves unknown ones alone [0.15ms]
+(pass) html extractor > ignores comments, including ones containing tags
+
+tests/language.test.ts:
+(pass) detecção > distingue os três [1.23ms]
+(pass) detecção > português e espanhol não se confundem [0.38ms]
+(pass) detecção > texto curto demais não recebe palpite [0.44ms]
+(pass) tag declarada > reduz ao que o narrador precisa
+(pass) tag declarada > o que não sabemos falar vira nulo
+
+tests/storage.test.ts:
+(pass) storage > round-trips a document [13.42ms]
+(pass) storage > keeps the original bytes so a re-import is not the only recovery [4.81ms]
+(pass) storage > the library index carries no block text [2.20ms]
+(pass) storage > progress is derived from tokenCount, not wordCount [1.31ms]
+(pass) storage > an unread document reads as zero progress [0.62ms]
+(pass) storage > newest import sorts first [1.36ms]
+(pass) storage > delete removes the document, its index row, bytes and position [2.53ms]
+(pass) storage > settings default when absent and merge forward when partial [1.23ms]
+(pass) storage > a saved position survives a re-import of the same file [0.40ms]
+
+tests/importers.test.ts:
+(pass) text importer > splits paragraphs [0.21ms]
+(pass) text importer > imports a txt buffer [0.42ms]
+(pass) markdown importer > turns headings into sections [6.88ms]
+(pass) markdown importer > imports the sample [6.33ms]
+(pass) import dispatch > sniffs each format to the right importer [0.60ms]
+(pass) import dispatch > a docx is no longer swallowed by the epub sniffer [0.12ms]
+(pass) import dispatch > rejects an unknown format [0.37ms]
+(pass) import dispatch > rejects an empty file [0.08ms]
+(pass) import dispatch > rejects a file over the size cap [0.15ms]
+(pass) import dispatch > reports progress phases [0.25ms]
+(pass) import dispatch > the same bytes import to the same document id [0.27ms]
+(pass) pasted text > keeps paragraphs and refuses nothing [0.30ms]
+(pass) pasted titles > a short first line becomes the title
+(pass) pasted titles > a first line that is a sentence falls back to an excerpt [0.66ms]
+(pass) pasted titles > pasted markdown keeps its structure and heading title [0.51ms]
+(pass) pasted titles > an explicit title still wins [0.13ms]
+
+tests/pt-br-numbers.test.ts:
+(pass) cardinais > as dezenas irregulares [0.15ms]
+(pass) cardinais > cem é exceção; cento não
+(pass) cardinais > o 'e' entre grupos segue a regra, não o gosto
+(pass) cardinais > milhões e bilhões
+(pass) cardinais > negativos
+(pass) ordinais > masculino e feminino [0.72ms]
+(pass) decimais > a vírgula é lida e os dígitos vão um a um [0.16ms]
+(pass) datas > o dia 1 é 'primeiro', os outros não [0.13ms]
+(pass) dinheiro > reais e centavos concordam em número
+
+tests/fetch-guard.test.ts:
+(pass) ssrf address guard > blocks loopback, private and link-local IPv4
+(pass) ssrf address guard > blocks the cloud metadata address specifically
+(pass) ssrf address guard > allows ordinary public IPv4
+(pass) ssrf address guard > blocks loopback, unique-local and link-local IPv6 [0.69ms]
+(pass) ssrf address guard > blocks IPv4-mapped IPv6 that points somewhere private
+(pass) ssrf address guard > allows ordinary public IPv6
+
+tests/voice.test.ts:
+(pass) segmenting > cuts at sentences [0.91ms]
+(pass) segmenting > an abbreviation is not a full stop [0.16ms]
+(pass) segmenting > initials do not break a name
+(pass) segmenting > a segment never spans two blocks
+(pass) segmenting > text with no punctuation still breaks up [0.87ms]
+(pass) segmenting > charStart lands on the document's own offsets
+(pass) segmenting > resuming lands on the sentence the reader stopped inside [0.26ms]
+(pass) segmenting > a segment with nothing sayable in it is dropped [0.06ms]
+(pass) normalising > a URL becomes a word, not a spelling test [0.02ms]
+(pass) normalising > bullets become the stop they meant
+(pass) normalising > whitespace collapses
+(pass) sentence guard > titles and abbreviations are not sentence ends
+(pass) sentence guard > an ordinary word ending in a period is
+(pass) sentence guard > a numbered list item is not, when the next word carries on
+(pass) sentence bounds > the trail and the narrator agree on where a sentence starts
+(pass) sentence bounds > a run with no punctuation is one sentence [0.49ms]
+(pass) sentence bounds > a closing quote stays with the sentence it closes
+
+tests/voice-provider.test.ts:
+(pass) what the worker is asked for > prefetching the same segment twice does not ask twice [0.83ms]
+(pass) what the worker is asked for > speaking a segment already warmed reuses it [0.12ms]
+(pass) what the worker is asked for > a play asks to load exactly once [0.35ms]
+(pass) what the worker is asked for > the segments ahead are the ones asked for, and only those
+(pass) what the worker is asked for > the language and voice reach the worker [0.52ms]
+(pass) failures are reported, not swallowed > a worker error reaches onError [0.26ms]
+(pass) failures are reported, not swallowed > stopping abandons what was warmed [0.08ms]
+
+tests/pt-br-normalize.test.ts:
+(pass) o que hoje chega cru no modelo > porcentagem com vírgula [1.06ms]
+(pass) o que hoje chega cru no modelo > dinheiro [0.28ms]
+(pass) o que hoje chega cru no modelo > data completa
+(pass) o que hoje chega cru no modelo > hora [0.20ms]
+(pass) o que hoje chega cru no modelo > ordinal carrega o gênero do glifo [0.05ms]
+(pass) o que hoje chega cru no modelo > milhar com ponto não vira dois números [0.71ms]
+(pass) o que hoje chega cru no modelo > ano solto
+(pass) o número concorda com o que ele conta > centenas mudam de gênero
+(pass) o número concorda com o que ele conta > dois e uma também
+(pass) o número concorda com o que ele conta > os -ma gregos não caem na regra do -a
+(pass) o número concorda com o que ele conta > terminações confiáveis
+(pass) o número concorda com o que ele conta > na dúvida, não chuta: -ão fica no masculino
+(pass) abreviações > títulos são ditos por extenso, não soletrados nem parados
+(pass) abreviações > referências de texto [0.61ms]
+(pass) abreviações > p.ex. não vira 'for example'
+(pass) a ordem entre as regras importa > dinheiro antes de decimal, senão perde a unidade
+(pass) a ordem entre as regras importa > data antes de inteiro, senão vira três números
+(pass) a ordem entre as regras importa > frase real, com tudo junto
+
+ 134 pass
+ 0 fail
+ 320 expect() calls
+Ran 134 tests across 13 files. [712.00ms]

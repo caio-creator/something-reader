@@ -1,0 +1,33 @@
+- link "Skip to content":
+  - /url: "#main"
+- button "Close":
+- generic: Read something.
+- button "Contents":
+- button "Look":
+- button "Pace":
+- button "Look"
+- button "Stop listening":
+- button "Read":
+  - generic: R
+  - generic: e
+  - generic: ad
+- paragraph:
+  - generic: reading...
+- button "Switch to Read":
+- button "Stop" [active]:
+- slider "Position": "0"
+- generic: 00:00:00
+- generic: 00:00:40
+- generic: 1m left
+- generic: v0.2.0
+- status
+- document:
+  - button "Chat with page":
+    - text: Chat with page
+  - button "✕ Merlin ⌘M Open Merlin":
+    - generic: ✕
+    - img "Merlin"
+    - generic: ⌘M
+    - text: Open Merlin
+  - button "Settings":
+    - text: Settings

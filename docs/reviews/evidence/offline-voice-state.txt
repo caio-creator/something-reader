@@ -1,0 +1,45 @@
+- link "Skip to content":
+  - /url: "#main"
+- button "Close":
+- generic: Read something.
+- button "Contents":
+- button "Look":
+- button "Pace":
+- button "Look"
+- button "Stop listening":
+- article:
+  - region "Start":
+    - heading "Read something." [level=2]
+    - paragraph: Something is a local-first reader. You drop a file in. You read it. You leave. You come back. You are still there.
+    - paragraph: It does not care whether the file was an EPUB, a PDF, a Markdown note, or a paragraph you pasted because someone sent you an 83-page report.
+  - region "Why this exists":
+    - heading "Why this exists" [level=2]
+    - paragraph: Most readers want an account, a catalog, or a weekly fee before they will open a file you already have. That is a strange way to treat a document.
+    - paragraph: This sample is here so the first screen is never a lecture. It is a page.
+  - region "Focus mode":
+    - heading "Focus mode" [level=2]
+    - paragraph: Focus shows one word at a time, aligned on a pivot letter. That is a real perceptual trick. It is not a license to claim you now read three times faster with perfect memory.
+    - paragraph: Use it when you want the words to come to you. Switch back when you need to look around.
+  - region "The deal":
+    - heading "The deal" [level=2]
+    - paragraph: • Your files stay in this browser. • Progress is saved when you pause, scroll, or leave. • There is no cloud in the way of the first sentence.
+- paragraph:
+  - generic: reading...
+- button "Switch to Focus":
+- button "Stop" [active]:
+- slider "Position": "0"
+- generic: 00:00:00
+- generic: 00:00:40
+- generic: 1m left
+- generic: v0.2.0
+- status
+- document:
+  - button "Chat with page":
+    - text: Chat with page
+  - button "✕ Merlin ⌘M Open Merlin":
+    - generic: ✕
+    - img "Merlin"
+    - generic: ⌘M
+    - text: Open Merlin
+  - button "Settings":
+    - text: Settings
