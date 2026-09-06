@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { loadSettings, saveSettings } from "@core/storage/idb";
-import { defaultSettings, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
+import { useStorage } from "./storage-context";
+import { anchorColor } from "@ui/anchor";
+import { defaultSettings, type ReaderSettings } from "@core/model/types";
 import { SettingsContext } from "./settings-context";
 
 const READING_SIZES = { s: "17px", m: "19px", l: "22px" } as const;
@@ -18,14 +19,24 @@ const EMPHASIS = {
 
 export const SettingsProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<ReaderSettings>(defaultSettings);
+  const { loadSettings, saveSettings } = useStorage();
   const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
   useEffect(() => {
+    let live = true;
+    setError(null);
     void loadSettings().then((saved) => {
+      if (!live) return;
       setSettings(saved);
       setLoaded(true);
+    }).catch((reason: unknown) => {
+      if (live) setError(reason instanceof Error ? reason.message : "Could not access your library. Try again.");
     });
-  }, []);
+    return () => { live = false; };
+  }, [attempt, loadSettings]);
 
   // Settings are CSS: every screen reads them through custom properties rather
   // than threading props down to every leaf.
@@ -34,7 +45,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     root.dataset.theme = settings.theme;
     root.style.setProperty(
       "--anchor",
-      settings.anchorColor === NEUTRAL_ANCHOR ? "var(--text)" : settings.anchorColor,
+      anchorColor(settings.anchorColor, settings.theme),
     );
     root.style.setProperty("--reading-size", READING_SIZES[settings.fontSize]);
     root.style.setProperty("--reading-font", READING_FONTS[settings.font]);
@@ -53,13 +64,13 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loaded) return;
-    void saveSettings(settings);
-  }, [settings, loaded]);
+    void saveSettings(settings).catch(() => setError("Could not save your preferences. Try again."));
+  }, [settings, loaded, saveSettings]);
 
   const update = useCallback((patch: Partial<ReaderSettings>) => {
     setSettings((current) => ({ ...current, ...patch }));
   }, []);
 
-  const value = useMemo(() => ({ settings, update, loaded }), [settings, update, loaded]);
+  const value = useMemo(() => ({ settings, update, loaded, error, retry }), [settings, update, loaded, error, retry]);
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 };

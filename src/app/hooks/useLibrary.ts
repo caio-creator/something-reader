@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { importInWorker } from "@core/importers/client";
 import { ImportError, importPastedText, importUrl } from "@core/importers";
 import { markdownImporter } from "@core/importers/markdown";
-import { deleteDocument, listLibrary, saveDocument } from "@core/storage/idb";
+import { useStorage } from "../providers/storage-context";
+import { MAX_IMPORT_BYTES } from "@core/importers";
 import type { LibraryItem } from "@core/storage/types";
 import type { SomethingDocument } from "@core/model/types";
 import { SAMPLE_MARKDOWN } from "../sample";
@@ -14,15 +15,16 @@ type Result = { doc: SomethingDocument; original?: ArrayBuffer };
 const IDLE: ImportState = { busy: false, phase: "", ratio: 0, error: null };
 
 export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
+  const { deleteDocument, listLibrary, saveDocument } = useStorage();
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [state, setState] = useState<ImportState>(IDLE);
 
   const refresh = useCallback(async () => {
     setItems(await listLibrary());
-  }, []);
+  }, [listLibrary]);
 
   useEffect(() => {
-    void refresh();
+    void refresh().catch(() => setState({ ...IDLE, error: "Could not open your library. Try again." }));
   }, [refresh]);
 
   const run = useCallback(
@@ -43,12 +45,13 @@ export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
         });
       }
     },
-    [onImported, refresh],
+    [onImported, refresh, saveDocument],
   );
 
   const addFile = useCallback(
     (file: File) =>
       run(async () => {
+        if (file.size > MAX_IMPORT_BYTES) throw new ImportError("too-large", "That file is larger than 80 MB.");
         const bytes = await file.arrayBuffer();
         // The worker takes ownership of the buffer it is given, so keep a copy
         // to store as the original.
@@ -86,7 +89,7 @@ export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
       await deleteDocument(id);
       await refresh();
     },
-    [refresh],
+    [refresh, deleteDocument],
   );
 
   const dismissError = useCallback(() => setState(IDLE), []);

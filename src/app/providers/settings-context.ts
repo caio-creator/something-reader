@@ -5,6 +5,8 @@ export type SettingsContextValue = {
   settings: ReaderSettings;
   update: (patch: Partial<ReaderSettings>) => void;
   loaded: boolean;
+  error: string | null;
+  retry: () => void;
 };
 
 /**

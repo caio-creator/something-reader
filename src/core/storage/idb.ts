@@ -1,9 +1,10 @@
 import type { ReaderSettings, ReadingPosition, SomethingDocument } from "../model/types";
 import { defaultSettings } from "../model/types";
 import type { LibraryItem, Storage } from "./types";
+import { assembleDocument } from "../model/build";
 
 const DB_NAME = "something-reader";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 const STORES = ["documents", "library", "blobs", "positions", "settings"] as const;
 
@@ -24,8 +25,24 @@ const openDb = (): Promise<IDBDatabase> => {
       if (!db.objectStoreNames.contains("blobs")) db.createObjectStore("blobs");
       if (!db.objectStoreNames.contains("positions")) db.createObjectStore("positions", { keyPath: "documentId" });
       if (!db.objectStoreNames.contains("settings")) db.createObjectStore("settings", { keyPath: "id" });
+      // Rebuild for both legacy v1 and v2 installations with an empty index.
+      const tx = req.transaction!;
+      const cursor = tx.objectStore("documents").openCursor();
+      cursor.onsuccess = () => {
+        const row = cursor.result;
+        if (!row) return;
+        const old = row.value as SomethingDocument;
+        const doc = { ...assembleDocument(old), id: old.id, importedAt: old.importedAt };
+        row.update(doc);
+        tx.objectStore("library").put(toLibraryRow(doc));
+        row.continue();
+      };
     };
     req.onsuccess = () => {
+      req.result.onversionchange = () => {
+        req.result.close();
+        connection = null;
+      };
       req.result.onclose = () => {
         connection = null;
       };
@@ -34,6 +51,10 @@ const openDb = (): Promise<IDBDatabase> => {
     req.onerror = () => {
       connection = null;
       reject(req.error);
+    };
+    req.onblocked = () => {
+      connection = null;
+      reject(new Error("Close other Something tabs, then try again."));
     };
   });
   return connection;

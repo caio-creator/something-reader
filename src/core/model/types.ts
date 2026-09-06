@@ -85,6 +85,8 @@ export const ANCHOR_COLORS = [
 ] as const;
 
 export type ReaderSettings = {
+  readerMode: "text" | "focus";
+  lastDocumentId: string | null;
   wpm: number;
   chunkSize: 1 | 2 | 3;
   fontSize: TextSize;
@@ -112,6 +114,8 @@ export type ReaderSettings = {
 };
 
 export const defaultSettings = (): ReaderSettings => ({
+  readerMode: "text",
+  lastDocumentId: null,
   wpm: 300,
   chunkSize: 1,
   fontSize: "m",
