@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, FocusWord, Icon, Menu, Segmented, Slider, Swatches, useToast, type IconName } from "@ui/components";
 import { copy } from "@ui/copy";
-import { clearAll, estimateUsage } from "@core/storage/idb";
+import { useStorage } from "../providers/storage-context";
 import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
 import { SystemTTSProvider } from "@core/voice/system";
 import { SupertonicProvider } from "@core/voice/supertonic/provider";
@@ -42,11 +42,12 @@ const PRESETS: { name: string; patch: Partial<ReaderSettings> }[] = [
 export const SettingsScreen = () => {
   const { settings, update } = useSettings();
   const toast = useToast();
+  const { clearAll, estimateUsage } = useStorage();
   const [usage, setUsage] = useState(0);
   const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
-    void estimateUsage().then(({ usage: used }) => setUsage(used));
+    void estimateUsage().then(({ usage: used }) => setUsage(used)).catch(() => {});
   }, []);
 
   /*
@@ -58,9 +59,36 @@ export const SettingsScreen = () => {
   const [packInstalled, setPackInstalled] = useState(false);
   const [packProgress, setPackProgress] = useState<string | null>(null);
   const natural = settings.voiceEngine === "natural";
+  const naturalProvider = useMemo(() => new SupertonicProvider(), []);
+  const downloadSession = useRef(0);
+  const [packError, setPackError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+  useEffect(() => () => { downloadSession.current++; naturalProvider.dispose(); }, [naturalProvider]);
+  const cancelDownload = () => {
+    downloadSession.current++;
+    naturalProvider.dispose();
+    setDownloading(false);
+    setPackProgress(null);
+  };
+  const download = async () => {
+    const session = ++downloadSession.current;
+    setDownloading(true);
+    setPackError(null);
+    setPackProgress("Preparing…");
+    try {
+      await naturalProvider.prepare((p) => {
+        if (session === downloadSession.current) setPackProgress(p.phase === "initializing" ? "Preparing…" : `${Math.min(100, Math.round(p.received / p.total * 100))}%`);
+      }, settings.voice ?? undefined);
+      if (session !== downloadSession.current) return;
+      setPackInstalled(await naturalProvider.ready(settings.voice ?? undefined));
+      setPackProgress(null);
+    } catch (reason) {
+      if (session === downloadSession.current) setPackError(reason instanceof Error ? reason.message : "Could not prepare the voice.");
+    } finally { if (session === downloadSession.current) setDownloading(false); }
+  };
 
   useEffect(() => {
-    const provider: TTSProvider = natural ? new SupertonicProvider() : new SystemTTSProvider();
+    const provider: TTSProvider = natural ? naturalProvider : new SystemTTSProvider();
     if (!provider.available()) {
       setVoices([]);
       return;
@@ -69,20 +97,20 @@ export const SettingsScreen = () => {
     void provider.voices().then((found) => {
       if (live) setVoices(found);
     });
-    void provider.ready?.().then((here: boolean) => {
+    void provider.ready?.(settings.voice ?? undefined).then((here: boolean) => {
       if (live) setPackInstalled(here);
     });
     return () => {
       live = false;
     };
-  }, [natural]);
+  }, [natural, naturalProvider, settings.voice]);
 
   const onRemovePack = useCallback(async () => {
-    await new SupertonicProvider().uninstall();
+    await naturalProvider.uninstall();
     setPackInstalled(false);
     setPackProgress(null);
     toast(copy.voiceRemove, "database");
-  }, [toast]);
+  }, [toast, naturalProvider]);
 
   const voiceItems = useMemo(
     () => [
@@ -183,7 +211,7 @@ export const SettingsScreen = () => {
             label={copy.voiceEngine}
             value={settings.voiceEngine}
             options={ENGINES}
-            onChange={(voiceEngine) => update({ voiceEngine: voiceEngine as "natural" | "system", voice: null })}
+            onChange={(voiceEngine) => { cancelDownload(); update({ voiceEngine: voiceEngine as "natural" | "system", voice: null }); }}
           />
         </Row>
         <p className="group-note">
@@ -194,10 +222,11 @@ export const SettingsScreen = () => {
             {packInstalled ? (
               <Button variant="quiet" onClick={onRemovePack}>{copy.voiceRemove}</Button>
             ) : (
-              <span className="mono">{packProgress ?? copy.voiceDownload}</span>
+              downloading ? <div><span role="status">{packProgress}</span><Button onClick={cancelDownload}>Cancel download</Button></div> : <Button onClick={() => void download()}>{copy.voiceDownload}</Button>
             )}
           </Row>
         )}
+        {packError && <p role="alert" className="group-note is-danger">{packError}</p>}
         {voices.length === 0 ? (
           <p className="group-note is-quiet">{copy.voiceNone}</p>
         ) : (
@@ -253,7 +282,7 @@ export const SettingsScreen = () => {
           {confirming ? (
             <div className="row-actions">
               <Button onClick={() => setConfirming(false)}>{copy.cancel}</Button>
-              <Button variant="primary" className="is-danger" onClick={() => void clearAll().then(() => window.location.reload())}>
+              <Button variant="primary" className="is-danger" onClick={() => void clearAll().then(() => window.location.reload()).catch(() => toast("Could not delete your data. Try again.", "info"))}>
                 {copy.clearAll}
               </Button>
             </div>

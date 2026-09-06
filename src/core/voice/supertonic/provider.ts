@@ -1,271 +1,270 @@
-import type {
-  NarrationSegment,
-  PackProgress,
-  SpeakHandlers,
-  SpeakOptions,
-  TTSProvider,
-  VoiceOption,
-} from "../types";
-import { isInstalled, remove, VOICES, type VoiceId } from "./pack";
+import type { NarrationSegment, PackProgress, SpeakHandlers, SpeakOptions, TTSProvider, VoiceOption } from "../types";
+import { dropStaleCaches, isInstalled, remove, VOICES, type VoiceId } from "./pack";
 import type { WorkerRequest, WorkerResponse } from "./protocol";
+import { note } from "./diagnostics";
 
 /**
- * Something Voice: Supertonic 3, running entirely on this machine.
+ * How long each step may go quiet before the reader is told something is wrong.
  *
- * One model covers thirty-one languages, so a document that switches between
- * Portuguese and English does not switch engines mid-paragraph, and a voice is
- * a timbre rather than a locale. It also carries its own text handling, which
- * is why there is no phonemiser here and no GPL dependency to reason about.
- *
- * What it does not give is word timings. Read Along is therefore driven from
- * the clock: the audio's own duration is known before it plays, so the mark
- * moves through the sentence in proportion to it. That is not forced
- * alignment and it will drift inside a long sentence, but it recovers at every
- * boundary and it is the difference between a mark that moves and one that
- * jumps.
+ * The audit watched the voice sit on `reading...` for minutes with no error and
+ * no way out; these are the ceilings that make that impossible. Measure them on
+ * a real phone before release — a cold WASM init on a mid-range Android is the
+ * case that decides whether 120 s is generous or merely honest.
  */
+const LIMITS = {
+  /** Between two chunks of a 268 MB file, not for the whole download. */
+  download: 30_000,
+  /** Four ONNX sessions created back to back on a cold machine. */
+  initializing: 120_000,
+  /** One sentence through the model, timed from the worker's `started`. */
+  sentence: 60_000,
+} as const;
+type Step = keyof typeof LIMITS;
 
-/** Their default is 1.05, which is slightly brisk for a book. */
-const DEFAULT_SPEED = 1;
-/** Flow-matching steps. Eight is the project's default; below six it thins. */
-const STEPS = 8;
-/** Sentences kept warm ahead of the one playing. */
-const LOOKAHEAD = 2;
-
-type Pending = {
-  resolve: (audio: { samples: Float32Array; sampleRate: number }) => void;
-  reject: (error: Error) => void;
-  onProgress?: (progress: PackProgress) => void;
+/**
+ * Which timeouts take the whole voice down with them, and which fail alone.
+ *
+ * `"session"` terminates the worker and rejects every pending job. It is the
+ * heavy option, but it is the only one that clears a poisoned queue: worker.ts
+ * runs jobs through one FIFO promise chain, so a synthesis that never returns
+ * blocks every job behind it forever — rejecting that one job would leave a
+ * worker that is alive, idle-looking and permanently deaf.
+ *
+ * It is cheaper than it sounds: the model files are already in Cache Storage,
+ * so a session restart costs a re-initialization, not a 400 MB re-download. And
+ * a sentence can only time out after the model has loaded, so this can never
+ * interrupt a download in flight.
+ *
+ * `"job"` rejects one job and leaves the worker running.
+ */
+const escalationFor = (step: Step): "job" | "session" => {
+  switch (step) {
+    case "sentence": return "session";
+    case "download": return "session";
+    case "initializing": return "session";
+  }
 };
 
+type Audio = { samples: Float32Array; sampleRate: number };
+type Pending = {
+  kind: "load" | "speak";
+  resolve: (audio: Audio) => void;
+  reject: (error: Error) => void;
+  progress?: (progress: PackProgress) => void;
+  timer?: ReturnType<typeof setTimeout>;
+};
+const voiceId = (id?: string): VoiceId => VOICES.includes(id as VoiceId) ? id as VoiceId : "F1";
+const keyOf = (segment: NarrationSegment, options: SpeakOptions) =>
+  JSON.stringify([segment.index, segment.spoken, options.lang, voiceId(options.voiceId), options.rate, 8]);
+
+/** Owns one worker and audio output; disposal is safe to repeat and reloads on demand. */
 export class SupertonicProvider implements TTSProvider {
   readonly id = "supertonic";
-
-  /**
-   * How a worker gets made. Injectable so the message flow can be tested
-   * without ONNX, a browser or 409 MB — which is what it took to catch the
-   * bug where one play started four downloads.
-   */
-  constructor(private readonly createWorker: () => Worker = defaultWorker) {}
-
+  constructor(private readonly createWorker: () => Worker = () => new Worker(new URL("./worker.ts", import.meta.url), { type: "module" })) {}
   private worker: Worker | null = null;
   private nextJob = 0;
-  private readonly pending = new Map<number, Pending>();
-  /** Segment index → the audio being made for it. */
-  private readonly warm = new Map<number, Promise<{ samples: Float32Array; sampleRate: number }>>();
-
+  private pending = new Map<number, Pending>();
+  private warm = new Map<string, Promise<Audio>>();
   private context: AudioContext | null = null;
   private source: AudioBufferSourceNode | null = null;
   private ticker = 0;
   private generation = 0;
 
-  available(): boolean {
-    return typeof Worker !== "undefined" && typeof AudioContext !== "undefined";
-  }
-
-  ready(): Promise<boolean> {
-    return isInstalled();
-  }
-
+  available() { return typeof Worker !== "undefined" && typeof AudioContext !== "undefined"; }
+  ready(id?: string) { return isInstalled(voiceId(id)); }
   async voices(): Promise<VoiceOption[]> {
-    return VOICES.map((id) => ({
-      id,
-      name: `${id.startsWith("F") ? "Feminina" : "Masculina"} ${id.slice(1)}`,
-      lang: "*",
-      local: true,
-    }));
+    return VOICES.map((id) => ({ id, name: `${id.startsWith("F") ? "Female" : "Male"} ${id.slice(1)}`, lang: "*", local: true }));
   }
-
-  async prepare(onProgress?: (progress: PackProgress) => void): Promise<void> {
-    const jobId = this.nextJob++;
-    await new Promise<void>((resolve, reject) => {
-      this.pending.set(jobId, {
-        resolve: () => resolve(),
-        reject,
-        onProgress,
-      });
-      this.send({ type: "load", jobId });
+  async prepare(progress?: (p: PackProgress) => void, id?: string): Promise<void> {
+    // Housekeeping, not a precondition: sweeping an older revision's cache must
+    // not delay the load request behind it.
+    void dropStaleCaches();
+    await this.request({ type: "load", jobId: this.nextJob++, voice: voiceId(id) }, progress);
+  }
+  unlock() {
+    this.context ??= new AudioContext();
+    // play() awaits and checks the same context; rejection is reported there.
+    void this.context.resume().catch(() => {});
+  }
+  prefetch(segment: NarrationSegment, options: SpeakOptions) {
+    void this.warmUp(segment, options).catch(() => {});
+  }
+  speak(segment: NarrationSegment, options: SpeakOptions, handlers: SpeakHandlers) {
+    const generation = ++this.generation;
+    void this.warmUp(segment, options).then(async (audio) => {
+      if (generation !== this.generation) return;
+      await this.play(audio, segment, handlers, generation);
+    }).catch((error: unknown) => {
+      if (generation === this.generation) handlers.onError(error instanceof Error ? error.message : String(error));
     });
   }
-
-  /**
-   * Open the audio output now, while the click is still the current event.
-   *
-   * Synthesis takes seconds and the download can take minutes, so by the time
-   * there is a waveform the gesture is long gone; a context created then is
-   * born suspended and `resume()` will not be honoured. Opening it here costs
-   * nothing and is the difference between hearing the voice and not.
-   */
-  unlock(): void {
-    this.context ??= new AudioContext();
-    void this.context.resume();
-  }
-
-  prefetch(segment: NarrationSegment, options: SpeakOptions): void {
-    this.warmUp(segment, options);
-  }
-
-  speak(segment: NarrationSegment, options: SpeakOptions, handlers: SpeakHandlers): void {
-    const generation = ++this.generation;
-    void this.warmUp(segment, options)
-      .then((audio) => {
-        if (generation !== this.generation) return;
-        this.play(audio, segment, handlers);
-      })
-      .catch((error: unknown) => {
-        if (generation !== this.generation) return;
-        handlers.onError(error instanceof Error ? error.message : String(error));
-      });
-  }
-
-  stop(): void {
-    this.generation += 1;
+  stop() {
+    this.generation++;
     this.stopTicking();
     if (this.source) {
       this.source.onended = null;
-      try {
-        this.source.stop();
-      } catch {
-        // Already finished; nothing to stop.
-      }
+      try { this.source.stop(); } catch { /* Already ended. */ }
+      this.source.disconnect();
       this.source = null;
+    }
+    for (const [id, job] of this.pending) {
+      if (job.kind !== "speak") continue;
+      this.worker?.postMessage({ type: "cancel", jobId: id } satisfies WorkerRequest);
+      clearTimeout(job.timer);
+      this.pending.delete(id);
+      job.reject(new Error("Speech cancelled."));
     }
     this.warm.clear();
   }
-
-  /** Frees the 409 MB. The worker goes with it, and rebuilds on demand. */
-  async uninstall(): Promise<void> {
+  dispose() {
     this.stop();
-    this.worker?.terminate();
-    this.worker = null;
-    await remove();
+    this.failAll("Voice preparation cancelled.");
+    const context = this.context;
+    this.context = null;
+    if (context && context.state !== "closed") void context.close().catch(() => {});
   }
+  async uninstall() { this.dispose(); await remove(); }
 
-  // ---- internals -------------------------------------------------------
-
-  private warmUp(
-    segment: NarrationSegment,
-    options: SpeakOptions,
-  ): Promise<{ samples: Float32Array; sampleRate: number }> {
-    const held = this.warm.get(segment.index);
-    if (held) return held;
-
-    const jobId = this.nextJob++;
-    const work = new Promise<{ samples: Float32Array; sampleRate: number }>((resolve, reject) => {
-      this.pending.set(jobId, { resolve, reject });
-      this.send({
-        type: "speak",
-        jobId,
-        text: segment.spoken,
-        lang: options.lang ?? "pt",
-        voice: (options.voiceId as VoiceId) ?? "F1",
-        speed: options.rate || DEFAULT_SPEED,
-        steps: STEPS,
-      });
-    });
-
-    this.warm.set(segment.index, work);
-    // Keep only what is ahead; a book's worth of decoded audio is not a cache,
-    // it is a leak.
-    for (const index of this.warm.keys()) {
-      if (index < segment.index - 1 || index > segment.index + LOOKAHEAD) this.warm.delete(index);
-    }
+  private warmUp(segment: NarrationSegment, options: SpeakOptions) {
+    const key = keyOf(segment, options);
+    const existing = this.warm.get(key);
+    if (existing) return existing;
+    const work = this.request({ type: "speak", jobId: this.nextJob++, text: segment.spoken,
+      lang: options.lang ?? "pt", voice: voiceId(options.voiceId), speed: options.rate || 1, steps: 8 });
+    this.warm.set(key, work);
+    void work.catch(() => { if (this.warm.get(key) === work) this.warm.delete(key); });
+    // The playing sentence plus two future sentences. FIFO evicts old audio.
+    while (this.warm.size > 3) this.warm.delete(this.warm.keys().next().value!);
     return work;
   }
-
-  private play(
-    audio: { samples: Float32Array; sampleRate: number },
-    segment: NarrationSegment,
-    handlers: SpeakHandlers,
-  ): void {
-    // Normally opened by `unlock` on the gesture; this is the fallback for a
-    // caller that never called it.
-    this.context ??= new AudioContext();
-    const context = this.context;
-    void context.resume();
-
-    const buffer = context.createBuffer(1, audio.samples.length, audio.sampleRate);
-    // A transferred buffer types as ArrayBufferLike; Web Audio wants the
-    // narrower one, and the samples are already ours to keep.
-    buffer.copyToChannel(new Float32Array(audio.samples), 0);
-
-    const source = context.createBufferSource();
-    source.buffer = buffer;
-    source.connect(context.destination);
-
-    const generation = this.generation;
-    const startedAt = context.currentTime;
-    const duration = buffer.duration;
-
-    source.onended = () => {
-      if (generation !== this.generation) return;
-      this.stopTicking();
-      this.warm.delete(segment.index);
-      handlers.onEnd();
-    };
-
-    // The mark walks the sentence in proportion to the audio, because the
-    // model reports no word boundaries. It is an estimate that resets at every
-    // sentence, which is a smaller lie than a mark that does not move at all.
-    if (handlers.onBoundary) {
-      const step = () => {
-        if (generation !== this.generation) return;
-        const ratio = Math.min(1, (context.currentTime - startedAt) / duration);
-        handlers.onBoundary?.(Math.round(ratio * segment.spoken.length));
-        this.ticker = requestAnimationFrame(step);
-      };
-      this.ticker = requestAnimationFrame(step);
-    }
-
-    this.source = source;
-    source.start();
+  private request(request: Exclude<WorkerRequest, { type: "cancel" }>, progress?: (p: PackProgress) => void): Promise<Audio> {
+    return new Promise((resolve, reject) => {
+      const job: Pending = { kind: request.type, resolve, reject, progress };
+      this.pending.set(request.jobId, job);
+      this.deadline(job, request.jobId, "initializing", "Voice preparation took too long. Try again.");
+      try { this.ensureWorker().postMessage(request); }
+      catch { this.failAll("Could not start the voice. Try again."); }
+    });
   }
-
-  /** Guarded: stop() has to work wherever the provider is driven from. */
-  private stopTicking(): void {
-    if (this.ticker && typeof cancelAnimationFrame === "function") {
-      cancelAnimationFrame(this.ticker);
-    }
-    this.ticker = 0;
+  private deadline(job: Pending, jobId: number, step: Step, reason: string) {
+    clearTimeout(job.timer);
+    const escalate = escalationFor(step);
+    job.timer = setTimeout(() => {
+      if (escalate === "session") this.failAll(reason);
+      else this.failJob(jobId, reason);
+    }, LIMITS[step]);
+    (job.timer as unknown as { unref?: () => void }).unref?.();
   }
-
-  private send(request: WorkerRequest): void {
-    this.ensureWorker()?.postMessage(request);
+  /** Give up on one job and leave the worker alone. */
+  private failJob(jobId: number, reason: string) {
+    const job = this.pending.get(jobId);
+    if (!job) return;
+    clearTimeout(job.timer);
+    this.pending.delete(jobId);
+    this.worker?.postMessage({ type: "cancel", jobId } satisfies WorkerRequest);
+    job.reject(new Error(reason));
   }
-
-  private ensureWorker(): Worker | null {
+  private failAll(reason: string) {
+    this.worker?.terminate();
+    this.worker = null;
+    for (const job of this.pending.values()) { clearTimeout(job.timer); job.reject(new Error(reason)); }
+    this.pending.clear();
+    this.warm.clear();
+  }
+  private ensureWorker() {
     if (this.worker) return this.worker;
-    if (typeof Worker === "undefined") return null;
     const worker = this.createWorker();
-
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
-      const message = event.data;
-      const job = this.pending.get(message.jobId);
+      const m = event.data;
+      const job = this.pending.get(m.jobId);
       if (!job) return;
-      if (message.type === "progress") {
-        job.onProgress?.({ received: message.received, total: message.total });
+      if (m.type === "progress") {
+        this.deadline(job, m.jobId, m.phase === "initializing" ? "initializing" : "download", "Voice preparation stopped responding. Try again.");
+        job.progress?.({ received: m.received, total: m.total, phase: m.phase });
         return;
       }
-      this.pending.delete(message.jobId);
-      if (message.type === "audio") job.resolve({ samples: message.samples, sampleRate: message.sampleRate });
-      else if (message.type === "ready") job.resolve({ samples: new Float32Array(), sampleRate: 0 });
-      else job.reject(new Error(message.message));
+      if (m.type === "started") {
+        this.deadline(job, m.jobId, "sentence", "This sentence took too long to generate. Try again.");
+        return;
+      }
+      clearTimeout(job.timer);
+      this.pending.delete(m.jobId);
+      if (m.type === "audio") job.resolve({ samples: m.samples, sampleRate: m.sampleRate });
+      else if (m.type === "ready") job.resolve({ samples: new Float32Array(), sampleRate: 0 });
+      else job.reject(new Error(m.notes?.length ? `${m.message} (${m.notes[m.notes.length - 1]})` : m.message));
     };
-
-    worker.onerror = () => {
-      // A dead worker takes its jobs with it. Fail them rather than hang, and
-      // let the next request build a new one.
-      this.pending.forEach((job) => job.reject(new Error("The voice stopped unexpectedly.")));
-      this.pending.clear();
-      this.warm.clear();
-      worker.terminate();
-      this.worker = null;
-    };
-
+    worker.onerror = () => this.failAll("The voice stopped unexpectedly. Try again.");
     this.worker = worker;
     return worker;
   }
+  private async play(audio: Audio, segment: NarrationSegment, handlers: SpeakHandlers, generation: number) {
+    if (!audio.samples.length || !Number.isFinite(audio.sampleRate) || audio.sampleRate <= 0) throw new Error("The voice returned no audio.");
+    this.context ??= new AudioContext();
+    const context = this.context;
+    // Do not leave a suspended context looking like active playback.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([context.resume(), new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Audio is blocked. Press Play to try again.")), 5000);
+      })]);
+    } finally { clearTimeout(timer); }
+    if (generation !== this.generation) return;
+    if (context.state !== "running") throw new Error("Audio is blocked. Press Play to try again.");
+    const buffer = context.createBuffer(1, audio.samples.length, audio.sampleRate);
+    buffer.copyToChannel(new Float32Array(audio.samples), 0);
+    const source = context.createBufferSource();
+    source.buffer = buffer;
+    /*
+     * The analyser sits on the path to the destination rather than beside it,
+     * so what it reads is the signal actually leaving the graph. The audit
+     * refused a play icon and a computed waveform as proof that the voice was
+     * audible, and it was right to: both can be true while the output is
+     * silent. This is the strongest claim the page can make on its own — real
+     * samples, non-zero, at the destination, on a running context. It still
+     * cannot hear the speaker, so it is recorded as "output confirmed", never
+     * as "the reader heard it".
+     */
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+    analyser.connect(context.destination);
+    const frame = new Float32Array(analyser.fftSize);
+    let audible = false;
+    const listen = () => {
+      if (audible || generation !== this.generation) return;
+      analyser.getFloatTimeDomainData(frame);
+      let sum = 0;
+      for (const sample of frame) sum += sample * sample;
+      const rms = Math.sqrt(sum / frame.length);
+      if (rms > 1e-4) {
+        audible = true;
+        note("audio", `output confirmed, rms ${rms.toFixed(4)}, ${context.sampleRate} Hz`);
+      }
+    };
+    const startedAt = context.currentTime;
+    source.onended = () => {
+      if (!audible) note("audio", "sentence ended with no non-silent sample at the destination");
+      source.disconnect();
+      analyser.disconnect();
+      if (generation !== this.generation) return;
+      this.source = null;
+      this.stopTicking();
+      handlers.onEnd();
+    };
+    this.source = source;
+    source.start();
+    note("audio", `playback started, ${buffer.duration.toFixed(2)}s, context ${context.state}`);
+    handlers.onStart?.();
+    const step = () => {
+      if (generation !== this.generation) return;
+      listen();
+      handlers.onBoundary?.(Math.round(Math.min(1, (context.currentTime - startedAt) / buffer.duration) * segment.spoken.length));
+      this.ticker = requestAnimationFrame(step);
+    };
+    this.ticker = requestAnimationFrame(step);
+  }
+  private stopTicking() {
+    if (this.ticker && typeof cancelAnimationFrame === "function") cancelAnimationFrame(this.ticker);
+    this.ticker = 0;
+  }
 }
-
-const defaultWorker = (): Worker =>
-  new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });

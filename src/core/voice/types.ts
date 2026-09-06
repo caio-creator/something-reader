@@ -39,7 +39,7 @@ export type VoiceOption = {
   local: boolean;
 };
 
-export type PackProgress = { received: number; total: number };
+export type PackProgress = { received: number; total: number; phase?: "downloading" | "initializing" };
 
 export type SpeakOptions = {
   voiceId?: string;
@@ -56,6 +56,7 @@ export type SpeakOptions = {
 };
 
 export type SpeakHandlers = {
+  onStart?: () => void;
   /**
    * Offset **within the segment's spoken text**, not the document. Only fires
    * where the platform reports boundaries; sentence-level sync has to work
@@ -82,14 +83,15 @@ export interface TTSProvider {
   voices(): Promise<VoiceOption[]>;
   speak(segment: NarrationSegment, options: SpeakOptions, handlers: SpeakHandlers): void;
   stop(): void;
+  dispose?(): void;
 
   /**
    * Whether this provider can speak right now without downloading anything.
    * The system voices are always ready; a neural pack is not until it is.
    */
-  ready?(): Promise<boolean>;
+  ready?(voiceId?: string): Promise<boolean>;
   /** One-time setup — for a neural pack, the download. */
-  prepare?(onProgress?: (progress: PackProgress) => void): Promise<void>;
+  prepare?(onProgress?: (progress: PackProgress) => void, voiceId?: string): Promise<void>;
   /**
    * Called synchronously from the gesture that started playback.
    *

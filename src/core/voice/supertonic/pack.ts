@@ -8,14 +8,20 @@
  * people who never turn the voice on.
  */
 
-export const HOST = "https://huggingface.co/Supertone/supertonic-3/resolve/main";
-export const CACHE = "something-voice-v1";
+export const HOST = "https://huggingface.co/Supertone/supertonic-3/resolve/3cadd1ee6394adea1bd021217a0e650ede09a323";
+/**
+ * Bumped with the pinned revision above. The cache is keyed by URL, so entries
+ * fetched from `resolve/main` can never match the pinned paths again — they are
+ * dead weight, and sw.js keeps every `something-voice-` cache on purpose, so
+ * nothing else would ever clear them. `dropStaleCaches` does.
+ */
+export const CACHE = "something-voice-v2";
 
 /** Sizes are what the server reports today; they drive the progress bar. */
 export const PACK = {
   id: "supertonic-3",
   name: "Natural",
-  bytes: 409_000_000,
+  bytes: 426_490_000,
   files: [
     { key: "vector_estimator", path: "onnx/vector_estimator.onnx", bytes: 268_000_000 },
     { key: "vocoder", path: "onnx/vocoder.onnx", bytes: 117_000_000 },
@@ -34,7 +40,7 @@ export const PACK = {
 export const VOICES = ["F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5"] as const;
 export type VoiceId = (typeof VOICES)[number];
 
-export type Progress = { received: number; total: number };
+export type Progress = { received: number; total: number; phase?: "downloading" | "initializing" };
 
 export const openCache = async (): Promise<Cache | null> => {
   try {
@@ -46,11 +52,30 @@ export const openCache = async (): Promise<Cache | null> => {
   }
 };
 
-export const isInstalled = async (): Promise<boolean> => {
+/**
+ * Voice styles are fetched one at a time and are not in the manifest, so "the
+ * pack is here" is only true for the voice being asked about. Reporting F1's
+ * presence as everyone's is how a reader gets told a voice works offline and
+ * then finds it does not.
+ */
+export const isInstalled = async (voice: VoiceId = "F1"): Promise<boolean> => {
   const store = await openCache();
   if (!store) return false;
   const checks = await Promise.all(PACK.files.map((f) => store.match(`${HOST}/${f.path}`)));
-  return checks.every(Boolean);
+  const style = await store.match(`${HOST}/voice_styles/${voice}.json`);
+  return checks.every(Boolean) && Boolean(style);
+};
+
+/** Drop voice caches from an older pinned revision, keeping the current one. */
+export const dropStaleCaches = async (): Promise<void> => {
+  try {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.filter((k) => k.startsWith("something-voice-") && k !== CACHE).map((k) => caches.delete(k)),
+    );
+  } catch {
+    // Nothing to do; stale bytes are wasteful, not harmful.
+  }
 };
 
 export const remove = async (): Promise<void> => {

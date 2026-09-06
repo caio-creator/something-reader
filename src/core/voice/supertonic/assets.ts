@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web";
+import * as ort from "onnxruntime-web/webgpu";
 // The bundler resolves the binary and hands back a URL that is right in dev
 // and in a build. Without this, onnxruntime asks for a path that does not
 // exist, the dev server answers every unknown path with index.html, and the
@@ -8,9 +8,17 @@ import * as ort from "onnxruntime-web";
 // its own binary in its exports map, so `onnxruntime-web/dist/...` cannot be
 // resolved. `?url` emits the file and hands back a URL that is correct in
 // dev and in a build.
+//
+// It must be the binary belonging to the entry imported above. `webgpu`
+// resolves to `ort.webgpu.bundle.min.mjs`, whose glue loads the *asyncify*
+// build; `ort-wasm-simd-threaded.jsep.wasm` belongs to the default entry. The
+// pair was mismatched, so the runtime was handed a binary its glue does not
+// know how to instantiate — and, because the fallback below reused the same
+// binary, it failed twice and said nothing.
 /* eslint-disable-next-line import/no-relative-packages */
-import wasmUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.jsep.wasm?url";
+import wasmUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm?url";
 import { HOST, openCache, PACK, type Progress, type VoiceId } from "./pack";
+import { note, reason } from "./diagnostics";
 import type { Cfgs, Model, Sessions, Style } from "./inference";
 
 /**
@@ -36,7 +44,11 @@ const download = async (url: string, onChunk: (bytes: number) => void): Promise<
   const reader = response.body.getReader();
   const parts: Uint8Array[] = [];
   for (;;) {
-    const { done, value } = await reader.read();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const { done, value } = await Promise.race([
+      reader.read(),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => { void reader.cancel(); reject(new Error("Download interrupted. Try again.")); }, 30_000); }),
+    ]).finally(() => clearTimeout(timer));
     if (done) break;
     parts.push(value);
     onChunk(value.byteLength);
@@ -84,7 +96,20 @@ const configure = () => {
   configured = true;
 };
 
-const sessionOptions: ort.InferenceSession.SessionOptions = {
+/**
+ * Asking for a backend the browser does not have is not free: it costs an
+ * initialization attempt and an exception per session before the fallback
+ * runs. Firefox and older Safari have no `navigator.gpu` at all, so ask once
+ * and go straight to WASM there.
+ */
+const hasWebGpu = (): boolean => "gpu" in navigator && Boolean(navigator.gpu);
+
+const WASM_ONLY: ort.InferenceSession.SessionOptions = {
+  executionProviders: ["wasm"],
+  graphOptimizationLevel: "all",
+};
+
+const PREFERRED: ort.InferenceSession.SessionOptions = {
   executionProviders: ["webgpu", "wasm"],
   graphOptimizationLevel: "all",
 };
@@ -98,23 +123,53 @@ export const loadModel = async (onProgress?: (p: Progress) => void): Promise<Mod
     onProgress?.({ received: Math.min(received, total), total });
   };
 
+  note("download", `${PACK.files.length} files, ${total} bytes declared`);
   const buffers = new Map<string, ArrayBuffer>();
   // Sequential on purpose: four parallel 100 MB downloads on a phone is how a
   // tab gets killed.
   for (const file of PACK.files) {
     buffers.set(file.key, await fetchCached(file.path, tick));
+    note("download", `${file.key} ready`);
   }
 
   const text = (key: string) => new TextDecoder().decode(buffers.get(key)!);
   const cfgs = JSON.parse(text("tts")) as Cfgs;
   const indexer = JSON.parse(text("unicode_indexer")) as number[];
 
-  const [duration, textEncoder, vectorEstimator, vocoder] = await Promise.all([
-    ort.InferenceSession.create(buffers.get("duration_predictor")!, sessionOptions),
-    ort.InferenceSession.create(buffers.get("text_encoder")!, sessionOptions),
-    ort.InferenceSession.create(buffers.get("vector_estimator")!, sessionOptions),
-    ort.InferenceSession.create(buffers.get("vocoder")!, sessionOptions),
-  ]);
+  onProgress?.({ received: total, total, phase: "initializing" });
+  const webgpu = hasWebGpu();
+  note("backend", webgpu ? "webgpu available, wasm as fallback" : "no navigator.gpu, wasm only");
+  const create = async (key: string) => {
+    const data = buffers.get(key)!;
+    try {
+      if (!webgpu) {
+        const session = await ort.InferenceSession.create(data, WASM_ONLY);
+        note(key, "session created on wasm");
+        return session;
+      }
+      try {
+        const session = await ort.InferenceSession.create(data, PREFERRED);
+        note(key, "session created on webgpu");
+        return session;
+      } catch (error) {
+        // Keep the reason. This is the step whose silence the audit could not
+        // see past, and the fallback is only trustworthy if it can be told
+        // apart from the thing it is falling back from.
+        note(key, `webgpu failed (${reason(error)}), falling back to wasm`);
+        const session = await ort.InferenceSession.create(data, WASM_ONLY);
+        note(key, "session created on wasm after webgpu failed");
+        return session;
+      }
+    } catch (error) {
+      note(key, `wasm failed (${reason(error)})`);
+      throw error;
+    } finally { buffers.delete(key); }
+  };
+  // ORT initialization and session execution must not race inside one worker.
+  const duration = await create("duration_predictor");
+  const textEncoder = await create("text_encoder");
+  const vectorEstimator = await create("vector_estimator");
+  const vocoder = await create("vocoder");
 
   const sessions: Sessions = { duration, textEncoder, vectorEstimator, vocoder };
   return { sessions, cfgs, indexer };

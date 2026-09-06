@@ -1,4 +1,4 @@
-import * as ort from "onnxruntime-web";
+import * as ort from "onnxruntime-web/webgpu";
 
 /**
  * Supertonic 3 inference, ported from the project's own `web/helper.js` (MIT).
@@ -116,6 +116,7 @@ export const synthesise = async (
     text_mask: mask,
   });
   const seconds = (predicted.duration!.data as Float32Array)[0]! / speed;
+  if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 120) throw new Error("The voice returned an invalid duration.");
 
   const encoded = await sessions.textEncoder.run({
     text_ids: ids,

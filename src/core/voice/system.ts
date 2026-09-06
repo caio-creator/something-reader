@@ -32,7 +32,7 @@ export class SystemTTSProvider implements TTSProvider {
    */
   async voices(): Promise<VoiceOption[]> {
     if (!this.available()) return [];
-    const read = () => window.speechSynthesis.getVoices().map(toOption);
+    const read = () => window.speechSynthesis.getVoices().filter((voice) => voice.localService).map(toOption);
     const first = read();
     if (first.length > 0) return first;
     return new Promise((resolve) => {
@@ -53,34 +53,40 @@ export class SystemTTSProvider implements TTSProvider {
     }
     // Queueing is not what we want: the caller decides what comes next, so
     // anything still pending is stale by definition.
-    window.speechSynthesis.cancel();
+    this.stop();
 
     const utterance = new SpeechSynthesisUtterance(segment.spoken);
     utterance.rate = options.rate;
-    if (options.voiceId) {
-      const voice = window.speechSynthesis.getVoices().find((v) => voiceId(v) === options.voiceId);
-      if (voice) {
-        utterance.voice = voice;
-        utterance.lang = voice.lang;
-      }
-    }
+    const voices = window.speechSynthesis.getVoices().filter((voice) => voice.localService);
+    const lang = options.lang ?? "en";
+    const selected = options.voiceId
+      ? voices.find((voice) => voiceId(voice) === options.voiceId)
+      : voices.find((voice) => voice.lang.toLowerCase().split("-")[0] === lang.toLowerCase().split("-")[0]);
+    if (!selected) { handlers.onError("No local voice for this language. Choose Natural or install a voice on your device."); return; }
+    utterance.voice = selected;
+    utterance.lang = selected.lang || lang;
+    utterance.onstart = () => { if (this.current === utterance) handlers.onStart?.(); };
     utterance.onend = () => {
-      if (this.current === utterance) this.current = null;
+      if (this.current !== utterance) return;
+      this.current = null;
       handlers.onEnd();
     };
     utterance.onerror = (event) => {
-      if (this.current === utterance) this.current = null;
+      if (this.current !== utterance) return;
+      this.current = null;
       // Cancelling to move on is not a failure, and every seek causes one.
       if (event.error === "interrupted" || event.error === "canceled") return;
       handlers.onError(event.error);
     };
     if (handlers.onBoundary) {
-      utterance.onboundary = (event) => handlers.onBoundary?.(event.charIndex);
+      utterance.onboundary = (event) => { if (this.current === utterance) handlers.onBoundary?.(event.charIndex); };
     }
 
     this.current = utterance;
     window.speechSynthesis.speak(utterance);
   }
+
+  dispose(): void { this.stop(); }
 
   stop(): void {
     if (!this.available()) return;
