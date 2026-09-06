@@ -36,7 +36,9 @@ export const Reader = ({
   onClose: () => void;
 }) => {
   const { settings, update } = useSettings();
-  const [mode, setMode] = useState<Mode>("focus");
+  const mode = settings.readerMode;
+  const setMode = useCallback((next: Mode | ((value: Mode) => Mode)) => update({ readerMode: typeof next === "function" ? next(mode) : next }), [mode, update]);
+  const [seekVersion, setSeekVersion] = useState(0);
   const [panel, setPanel] = useState<Panel>(null);
   const [showHint, setShowHint] = useState(true);
   const [listening, setListening] = useState(false);
@@ -51,6 +53,15 @@ export const Reader = ({
    * the narrator moves; with it off, the engine paces itself. Which one is
    * running is never both.
    */
+  const seekToChar = useCallback((char: number) => {
+    if (listening) voice.seek(char);
+    else engine.current?.seekToChar(char);
+    setSeekVersion((n) => n + 1);
+  }, [engine, listening, voice.seek]);
+  const seekIndex = useCallback((index: number) => {
+    engine.current?.seek(index);
+    seekToChar(engine.current?.getSnapshot().position.charOffset ?? 0);
+  }, [engine, seekToChar]);
   const running = snapshot?.playing || voice.speaking;
   const toggle = useCallback(() => {
     setShowHint(false);
@@ -65,11 +76,11 @@ export const Reader = ({
   // Turning the voice off mid-sentence has to silence it, not orphan it.
   useEffect(() => {
     if (!listening) voice.stop();
-  }, [listening, voice]);
+  }, [listening, voice.stop]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (isTyping(event)) return;
+      if (isTyping(event) || panel) return;
       if (event.metaKey || event.ctrlKey) return;
       if (event.key === "Escape") {
         if (panel) return;
@@ -80,15 +91,15 @@ export const Reader = ({
         event.preventDefault();
         toggle();
       }
-      if (event.key === "ArrowRight" || event.key === "j") engine.current?.step(1);
-      if (event.key === "ArrowLeft" || event.key === "k") engine.current?.step(-1);
+      if (event.key === "ArrowRight" || event.key === "j") seekIndex((snapshot?.index ?? 0) + settings.chunkSize);
+      if (event.key === "ArrowLeft" || event.key === "k") seekIndex((snapshot?.index ?? 0) - settings.chunkSize);
       if (event.key === "t") setMode((m) => (m === "focus" ? "text" : "focus"));
       if (event.key === "c") setPanel((p) => (p === "contents" ? null : "contents"));
       if (event.key === "a") setPanel((p) => (p === "look" ? null : "look"));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [engine, onClose, panel, toggle]);
+  }, [engine, onClose, panel, toggle, seekIndex, snapshot?.index, settings.chunkSize, setMode]);
 
   const word = snapshot?.chunk.length ? snapshot.chunk.map((t) => t.text).join(" ") : doc.title;
   const activeSectionId = useMemo(() => {
@@ -150,7 +161,8 @@ export const Reader = ({
             icon="listen"
             aria-label={listening ? copy.listenOff : voice.available ? copy.listen : copy.listenNone}
             disabled={!voice.available}
-            onClick={() => setListening((on) => !on)}
+            onClick={() => { engine.current?.pause(); setListening((on) => !on); }}
+            aria-pressed={listening}
           />
         </div>
       </header>
@@ -160,11 +172,12 @@ export const Reader = ({
       ) : (
         <TextStage
           doc={doc}
+          seekVersion={seekVersion}
           activeBlockId={snapshot?.position.blockId}
           cursor={snapshot?.position.charOffset ?? 0}
           playing={running ?? false}
           onJump={(block) => {
-            engine.current?.seekToChar(block.charStart);
+            seekToChar(block.charStart);
             setMode("focus");
           }}
           onScrolledTo={(block) => engine.current?.seekToChar(block.charStart)}
@@ -176,8 +189,12 @@ export const Reader = ({
           <p className="dock-status mono">
             {voice.error
               ? <span className="is-danger">{voice.error}</span>
+              : voice.phase === "initializing"
+                ? "Preparing the voice…"
+              : voice.phase === "synthesizing"
+                ? "Preparing this sentence…"
               : voice.pack
-                ? `${copy.voiceGetting} · ${Math.round((voice.pack.received / voice.pack.total) * 100)}%`
+                ? `${copy.voiceGetting} · ${Math.min(100, Math.round((voice.pack.received / voice.pack.total) * 100))}%`
                 : running
                   ? <Typing text={copy.readingNow} />
                   : mode === "focus"
@@ -204,15 +221,15 @@ export const Reader = ({
               max={Math.max(0, snapshot.length - 1)}
               value={snapshot.index}
               valueText={`${Math.round(snapshot.progress * 100)} percent`}
-              onChange={(index) => engine.current?.seek(index)}
+              onChange={seekIndex}
             />
             <div className="dock-times">
-              <span className="mono">{timecode(snapshot.elapsedMs)}</span>
-              <span className="mono">{timecode(snapshot.elapsedMs + snapshot.remainingMs)}</span>
+              <span className="mono">{listening ? `${Math.round(snapshot.progress * 100)}%` : timecode(snapshot.elapsedMs)}</span>
+              <span className="mono">{listening ? `${settings.voiceRate.toFixed(2)}x` : timecode(snapshot.elapsedMs + snapshot.remainingMs)}</span>
             </div>
           </div>
           <footer className="card-foot">
-            <span className="mono">{timeLeft(snapshot.remainingMs)}</span>
+            <span className="mono">{listening ? "Listen · sentence progress" : timeLeft(snapshot.remainingMs)}</span>
             <span className="mono">{VERSION}</span>
           </footer>
         </div>
@@ -228,13 +245,13 @@ export const Reader = ({
             </Button>
           }
         >
-          <WheelPicker
+          {listening ? <Slider label="Voice pace" min={0.5} max={2} step={0.05} value={settings.voiceRate} onChange={(voiceRate) => { voice.stop(); update({ voiceRate }); }} valueText={`${settings.voiceRate} times`} /> : <WheelPicker
             label={copy.paceTitle}
             values={PACE_VALUES}
             value={settings.wpm}
             format={(value) => `${value} WPM`}
             onChange={(wpm) => update({ wpm })}
-          />
+          />}
           <p className="sheet-note mono">
             {timeLeft(estimateMs(Math.max(0, doc.tokenCount - (snapshot?.index ?? 0)), settings.wpm))}
           </p>
@@ -257,7 +274,7 @@ export const Reader = ({
             activeSectionId={activeSectionId}
             wpm={settings.wpm}
             onPick={(section) => {
-              engine.current?.seekToChar(section.charStart);
+              seekToChar(section.charStart);
               setPanel(null);
             }}
           />
@@ -341,6 +358,7 @@ const FocusStage = ({
 
 const TextStage = ({
   doc,
+  seekVersion,
   activeBlockId,
   cursor,
   playing,
@@ -348,6 +366,7 @@ const TextStage = ({
   onScrolledTo,
 }: {
   doc: SomethingDocument;
+  seekVersion: number;
   activeBlockId?: string;
   cursor: number;
   playing: boolean;
@@ -420,12 +439,12 @@ const TextStage = ({
   }, [cursor, playing]);
 
   useEffect(() => {
-    if (!activeBlockId || restored.current === doc.id) return;
-    restored.current = doc.id;
+    if (!activeBlockId || restored.current === `${doc.id}:${seekVersion}`) return;
+    restored.current = `${doc.id}:${seekVersion}`;
     scroller.current
       ?.querySelector(`[data-block="${activeBlockId}"]`)
       ?.scrollIntoView({ block: "center" });
-  }, [doc.id, activeBlockId]);
+  }, [doc.id, activeBlockId, seekVersion]);
 
   return (
     <div className="text-stage" ref={scroller}>

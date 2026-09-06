@@ -6,12 +6,14 @@ import { estimateMs, timeLeft } from "../format";
 
 export const Things = ({
   items,
+  continueId,
   wpm,
   onOpen,
   onRemove,
   onAdd,
 }: {
   items: LibraryItem[];
+  continueId?: string | null;
   wpm: number;
   onOpen: (id: string) => void;
   onRemove: (id: string, title: string) => void;
@@ -31,6 +33,8 @@ export const Things = ({
     );
   }, [items, query]);
 
+  const last = items.find((item) => item.id === continueId);
+
   return (
     <main className="things" id="main">
       <header className="things-head">
@@ -41,7 +45,7 @@ export const Things = ({
             trigger={<span className="add-button"><Icon name="close" size={20} className="add-glyph" /></span>}
             actions={[
               { id: "paste", label: copy.paste, icon: "paste", onSelect: () => onAdd("paste") },
-              { id: "link", label: copy.link, icon: "link", onSelect: () => onAdd("link") },
+              ...(import.meta.env.DEV ? [{ id: "link", label: copy.link, icon: "link" as const, onSelect: () => onAdd("link") }] : []),
               { id: "file", label: copy.openFile, icon: "file", onSelect: () => onAdd("file") },
               { id: "sample", label: copy.sample, icon: "sample", onSelect: () => onAdd("sample") },
             ]}
@@ -60,6 +64,7 @@ export const Things = ({
         </div>
       </header>
 
+      {last && !query && <section className="continue-reading"><p>Continue reading</p><Button onClick={() => onOpen(last.id)}>{last.title}</Button></section>}
       {items.length === 0 ? (
         <div className="things-empty">
           <EmptyState icon="info" title={copy.emptyWhy} body={copy.emptyWhyBody} />

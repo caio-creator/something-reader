@@ -7,8 +7,8 @@ export const copy = {
   tagline: "Read something.",
 
   // navigation
-  things: "Things",
-  now: "Read now",
+  things: "Library",
+  now: "Add",
   settings: "Settings",
 
   // import
@@ -23,7 +23,7 @@ export const copy = {
   sample: "Try something",
   or: "or",
   drop: "Drop it anywhere.",
-  hint: "EPUB, PDF, DOCX, Markdown, HTML or plain text. Nothing leaves this machine.",
+  hint: "EPUB, PDF, DOCX, Markdown, HTML or plain text. Files are read on this device.",
   adding: "Adding something…",
   ready: "Something new is ready.",
   add: "Add",
@@ -46,9 +46,9 @@ export const copy = {
   close: "Close",
   pace: "Pace",
   paceTitle: "Your pace",
-  play: "Read",
+  play: "Play",
   pause: "Pause",
-  stop: "Stop",
+  stop: "Pause",
   /* Typed one character at a time in the dock, so the three dots are three
      characters and not one ellipsis glyph. */
   readingNow: "reading...",
@@ -56,10 +56,10 @@ export const copy = {
    * The two shapes a document can take. `Read` rather than `Text` because the
    * lexicon has said Read since the start and the code had drifted.
    */
-  read: "Read",
+  read: "Text",
   focus: "Focus",
   /* Toggles say what they do. Two buttons in one dock cannot both be "Read". */
-  toRead: "Switch to Read",
+  toRead: "Switch to Text",
   toFocus: "Switch to Focus",
   focusHere: "Focus from here",
   tapTitle: "Tap to play",
@@ -75,14 +75,14 @@ export const copy = {
   voice: "Voice",
   voiceBody: "Read out loud, using the voices already on this device. Nothing is downloaded and nothing is sent anywhere.",
   voiceNone: "This device has no speech voices installed.",
-  voiceDefault: "System default",
+  voiceDefault: "Default voice",
   voiceRate: "Voice pace",
   voiceEngine: "Engine",
   voiceNatural: "Natural",
   voiceSystem: "System",
   voiceNaturalBody:
     "Something Voice runs here, on this machine. One download of about 400 MB, then it works with the network off and nothing you read is ever sent anywhere.",
-  voiceSystemBody: "The voices already installed on this device. Nothing to download.",
+  voiceSystemBody: "Local voices for the document language. Text is never sent to a speech service.",
   voiceDownload: "Download",
   voiceInstalled: "Installed",
   voiceRemove: "Remove voice",
@@ -151,7 +151,7 @@ export const copy = {
       body: "Focus mode holds each word on the spot your eye already looks for.\n\nIt will not make you read three times faster. It will keep you moving.",
     },
     {
-      title: "Nothing leaves this machine.",
+      title: "Files are read on this device.",
       body: "No account. No cloud. No paywall on files you already own.\n\nClose the tab. Come back. You are where you left off.",
     },
   ],

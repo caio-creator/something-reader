@@ -67,9 +67,9 @@ export const ReadNow = ({
               <Button variant="stack" icon="paste" onClick={() => setSheet("paste")}>
                 {copy.paste}
               </Button>
-              <Button variant="stack" icon="link" onClick={() => setSheet("link")}>
+              {import.meta.env.DEV && <Button variant="stack" icon="link" onClick={() => setSheet("link")}>
                 {copy.link}
-              </Button>
+              </Button>}
               <Button variant="stack" icon="file" onClick={() => fileInput.current?.click()}>
                 {copy.openFile}
               </Button>

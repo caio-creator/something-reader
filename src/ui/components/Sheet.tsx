@@ -16,13 +16,16 @@ export const Sheet = ({
   const card = useRef<HTMLDivElement>(null);
   const restoreTo = useRef<Element | null>(null);
 
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     restoreTo.current = document.activeElement;
     card.current?.querySelector<HTMLElement>("button, [href], input, select, textarea")?.focus();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab" || !card.current) return;
@@ -47,7 +50,7 @@ export const Sheet = ({
       document.removeEventListener("keydown", onKey, true);
       (restoreTo.current as HTMLElement | null)?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div className="sheet-scrim" onClick={onClose}>
