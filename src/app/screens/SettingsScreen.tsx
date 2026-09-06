@@ -168,7 +168,7 @@ export const SettingsScreen = () => {
           <Segmented label={copy.emphasis} value={settings.emphasis} options={EMPHASES} onChange={(emphasis) => update({ emphasis })} />
         </Row>
         <Row icon="anchor" label={copy.anchor}>
-          <Swatches label={copy.anchor} value={settings.anchorColor} onChange={(anchorColor) => update({ anchorColor })} />
+          <Swatches label={copy.anchor} theme={settings.theme} value={settings.anchorColor} onChange={(anchorColor) => update({ anchorColor })} />
         </Row>
         <Row icon="guides" label={copy.guides}>
           <Segmented label={copy.guides} value={settings.guides} options={GUIDES} onChange={(guides) => update({ guides })} />

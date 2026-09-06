@@ -66,6 +66,9 @@ const Shell = () => {
     if (doc || !onboarded) return;
     const onKey = (event: KeyboardEvent) => {
       if (isTyping(event)) return;
+      // A sheet is a modal: while one is open it owns the keyboard, and 1/2/3
+      // switching tabs underneath it was how a removal dialog lost its page.
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === "1") setTab("things");
       if (event.key === "2") setTab("now");

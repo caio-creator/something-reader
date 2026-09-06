@@ -49,6 +49,9 @@ export const copy = {
 
   // reader
   close: "Close",
+  /* The three panels behind one button on a narrow screen. It borrowed Look's
+     label, so a screen reader announced the wrong one of the three. */
+  more: "More",
   pace: "Pace",
   paceTitle: "Your pace",
   play: "Play",

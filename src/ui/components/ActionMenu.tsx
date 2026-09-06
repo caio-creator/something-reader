@@ -20,27 +20,64 @@ export const ActionMenu = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [up, setUp] = useState(false);
+  /*
+   * Only a keyboard opening moves focus into the list. Opening by click and
+   * then focusing an item would draw a focus ring nobody asked for, over an
+   * item the pointer is not on.
+   */
+  const [active, setActive] = useState<number | null>(null);
   const root = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const items = useRef<(HTMLButtonElement | null)[]>([]);
   const id = useId();
+
+  const place = () => {
+    const box = root.current?.getBoundingClientRect();
+    const needed = actions.length * 48 + 16;
+    setUp(!!box && box.bottom + needed > window.innerHeight - 16 && box.top > needed);
+  };
+
+  const close = (returnFocus: boolean) => {
+    setOpen(false);
+    setActive(null);
+    if (returnFocus) triggerRef.current?.focus();
+  };
+
+  useEffect(() => {
+    if (!open || active === null) return;
+    items.current[active]?.focus();
+  }, [open, active]);
 
   useEffect(() => {
     if (!open) return;
     const onDown = (event: MouseEvent) => {
       if (!root.current?.contains(event.target as Node)) setOpen(false);
     };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        setOpen(false);
-      }
-    };
     document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey, true);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey, true);
-    };
+    return () => document.removeEventListener("mousedown", onDown);
   }, [open]);
+
+  const onKeyDown = (event: React.KeyboardEvent) => {
+    const last = actions.length - 1;
+    const at = active ?? 0;
+    const move = (next: number) => {
+      event.preventDefault();
+      setActive((next + actions.length) % actions.length);
+    };
+    switch (event.key) {
+      case "ArrowDown": return move(at + 1);
+      case "ArrowUp": return move(at - 1);
+      case "Home": return move(0);
+      case "End": return move(last);
+      case "Escape":
+        // The reader's own shortcuts must not also see this one.
+        event.preventDefault();
+        event.stopPropagation();
+        return close(true);
+      case "Tab": return close(false);
+      default: return;
+    }
+  };
 
   return (
     <div className={`menu action-menu align-${align}`} ref={root}>
@@ -51,25 +88,34 @@ export const ActionMenu = ({
         aria-controls={id}
         aria-label={label}
         className="action-trigger"
+        ref={triggerRef}
         onClick={() => {
-          const box = root.current?.getBoundingClientRect();
-          const needed = actions.length * 48 + 16;
-          setUp(!!box && box.bottom + needed > window.innerHeight - 16 && box.top > needed);
+          place();
+          setActive(null);
           setOpen((v) => !v);
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          place();
+          setOpen(true);
+          setActive(event.key === "ArrowDown" ? 0 : actions.length - 1);
         }}
       >
         {trigger}
       </button>
 
       {open && (
-        <ul className={`menu-list${up ? " is-up" : ""}`} id={id} role="menu" aria-label={label}>
-          {actions.map((action) => (
+        <ul className={`menu-list${up ? " is-up" : ""}`} id={id} role="menu" aria-label={label} onKeyDown={onKeyDown}>
+          {actions.map((action, index) => (
             <li key={action.id}>
               <button
                 type="button"
                 role="menuitem"
+                ref={(node) => { items.current[index] = node; }}
+                tabIndex={active === null ? 0 : index === active ? 0 : -1}
                 onClick={() => {
-                  setOpen(false);
+                  close(false);
                   action.onSelect();
                 }}
               >

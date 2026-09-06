@@ -54,7 +54,7 @@ export const AppearanceControls = () => {
         <Menu label={copy.font} value={settings.font} items={FONTS} onChange={(font) => update({ font })} />
       </Field>
       <Field label={copy.anchor}>
-        <Swatches label={copy.anchor} value={settings.anchorColor} onChange={(anchorColor) => update({ anchorColor })} />
+        <Swatches label={copy.anchor} theme={settings.theme} value={settings.anchorColor} onChange={(anchorColor) => update({ anchorColor })} />
       </Field>
       <Field label={copy.guides}>
         <Segmented label={copy.guides} value={settings.guides} options={GUIDES} onChange={(guides) => update({ guides })} />

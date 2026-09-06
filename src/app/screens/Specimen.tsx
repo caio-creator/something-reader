@@ -13,6 +13,7 @@ import {
 } from "@ui/components";
 import { copy } from "@ui/copy";
 import { ANCHOR_COLORS } from "@core/model/types";
+import { useSettings } from "../providers/settings-context";
 
 /**
  * The specimen sheet: every token and every component, in every state, on one
@@ -69,6 +70,7 @@ const SPACE = ["1", "2", "3", "4", "5", "6", "7", "8"];
 const RADII = ["--radius-control", "--radius-card", "--radius-sheet", "--radius-pill"];
 
 export const Specimen = () => {
+  const { settings } = useSettings();
   const [seg, setSeg] = useState("b");
   const [menu, setMenu] = useState("serif");
   const [swatch, setSwatch] = useState<string>(ANCHOR_COLORS[0]);
@@ -231,7 +233,7 @@ export const Specimen = () => {
               onChange={setMenu}
             />
           </Cell>
-          <Cell label="swatches"><Swatches label="Anchor" value={swatch} onChange={setSwatch} /></Cell>
+          <Cell label="swatches"><Swatches label="Anchor" theme={settings.theme} value={swatch} onChange={setSwatch} /></Cell>
           <Cell label="slider"><Slider label="Pace" min={100} max={800} step={10} value={pace} onChange={setPace} readout={`${pace} WPM`} /></Cell>
           <Cell label="slider disabled"><Slider label="Disabled" min={0} max={100} value={40} onChange={() => undefined} disabled /></Cell>
           <Cell label="field"><input className="field" placeholder="https://" aria-label="Link" /></Cell>

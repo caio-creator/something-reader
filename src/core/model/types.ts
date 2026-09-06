@@ -85,7 +85,16 @@ export const ANCHOR_COLORS = [
 ] as const;
 
 export type ReaderSettings = {
-  readerMode: "text" | "focus";
+  /**
+   * How each document was last read, by id.
+   *
+   * One global mode meant importing something new opened it in Focus because
+   * the last thing you read was in Focus. A document without an entry opens in
+   * Text, which is the mode that shows the document rather than a word from it.
+   * Bounded: the map is trimmed to the most recent entries rather than growing
+   * for every document ever opened.
+   */
+  readerModes: Record<string, "text" | "focus">;
   lastDocumentId: string | null;
   wpm: number;
   chunkSize: 1 | 2 | 3;
@@ -114,7 +123,7 @@ export type ReaderSettings = {
 };
 
 export const defaultSettings = (): ReaderSettings => ({
-  readerMode: "text",
+  readerModes: {},
   lastDocumentId: null,
   wpm: 300,
   chunkSize: 1,

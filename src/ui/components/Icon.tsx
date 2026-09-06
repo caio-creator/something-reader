@@ -17,7 +17,7 @@ export type IconName =
   | "forward" | "check" | "weight" | "palette" | "guides" | "shield"
   | "contrast" | "anchor" | "textsize" | "font" | "chunk" | "presets"
   | "contents" | "keyboard" | "chevron" | "database" | "info" | "external"
-  | "drop" | "clock" | "reset"
+  | "drop" | "clock" | "reset" | "more"
   // Solid counterparts. Navigation reads as selected when its icon fills in —
   // a colour change alone is a weak signal at 24px.
   | "things-solid" | "read-solid" | "settings-solid";
@@ -38,6 +38,16 @@ const ICONS: Record<IconName, Part[]> = {
   things: [
     { d: "M8.2 7.6V6.2a2 2 0 0 1 2-2h7.6a2 2 0 0 1 2 2v7.6a2 2 0 0 1-2 2h-1.4" },
     { d: "M6.2 8.6h7.6a2 2 0 0 1 2 2v7.2a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2v-7.2a2 2 0 0 1 2-2z" },
+  ],
+  /*
+   * Three dots, for the button that holds the three panels a narrow screen has
+   * no room for. It was borrowing the chunk-size glyph, which is a drawing
+   * about something else entirely.
+   */
+  more: [
+    { d: "M6.6 12a1.4 1.4 0 1 1-2.8 0 1.4 1.4 0 0 1 2.8 0z", fill: true },
+    { d: "M13.4 12a1.4 1.4 0 1 1-2.8 0 1.4 1.4 0 0 1 2.8 0z", fill: true },
+    { d: "M20.2 12a1.4 1.4 0 1 1-2.8 0 1.4 1.4 0 0 1 2.8 0z", fill: true },
   ],
   /*
    * Prose with the line you are on marked solid — the reading trail the text

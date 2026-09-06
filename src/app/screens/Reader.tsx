@@ -36,8 +36,15 @@ export const Reader = ({
   onClose: () => void;
 }) => {
   const { settings, update } = useSettings();
-  const mode = settings.readerMode;
-  const setMode = useCallback((next: Mode | ((value: Mode) => Mode)) => update({ readerMode: typeof next === "function" ? next(mode) : next }), [mode, update]);
+  const mode: Mode = settings.readerModes[doc.id] ?? "text";
+  const setMode = useCallback((next: Mode | ((value: Mode) => Mode)) => {
+    const chosen = typeof next === "function" ? next(mode) : next;
+    // Keep the most recent choices only; a reader with a large library should
+    // not carry an entry for every document they have ever opened.
+    const entries = Object.entries(settings.readerModes).filter(([id]) => id !== doc.id);
+    const kept = entries.slice(Math.max(0, entries.length - 49));
+    update({ readerModes: { ...Object.fromEntries(kept), [doc.id]: chosen } });
+  }, [mode, update, settings.readerModes, doc.id]);
   const [seekVersion, setSeekVersion] = useState(0);
   const [panel, setPanel] = useState<Panel>(null);
   const [showHint, setShowHint] = useState(true);
@@ -140,10 +147,10 @@ export const Reader = ({
           />
           {/* Same three panels, one button, below 380px. */}
           <ActionMenu
-            label={copy.look}
+            label={copy.more}
             trigger={
               <span className="btn btn-circle is-overflow">
-                <Icon name="chunk" size={20} />
+                <Icon name="more" size={20} />
               </span>
             }
             actions={[
