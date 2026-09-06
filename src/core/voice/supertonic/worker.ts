@@ -35,7 +35,7 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
       const model = await getModel();
       const style = await styleFor(request.voice ?? "F1");
       if (cancelled.has(request.jobId)) return;
-      if (request.type === "load") { post({ type: "ready", jobId: request.jobId }); return; }
+      if (request.type === "load") { post({ type: "ready", jobId: request.jobId, notes: voiceNoteLines() }); return; }
       post({ type: "started", jobId: request.jobId });
       const samples = await synthesise(request.text, model, style, { lang: request.lang, steps: request.steps, speed: request.speed });
       if (!cancelled.has(request.jobId)) post({ type: "audio", jobId: request.jobId, samples, sampleRate: model.cfgs.ae.sample_rate }, [samples.buffer]);

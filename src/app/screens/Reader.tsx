@@ -72,13 +72,26 @@ export const Reader = ({
   const running = snapshot?.playing || voice.speaking;
   const toggle = useCallback(() => {
     setShowHint(false);
+    /*
+     * At the end the button says Start over, and it has to mean it in both
+     * modes. With Listen on it used to hand `start()` the position it was
+     * already at, so it read the last sentence again and left the reader at
+     * 100% — the label promised one thing and the narrator did another.
+     */
+    if (snapshot?.finished) {
+      engine.current?.seek(0);
+      setSeekVersion((n) => n + 1);
+      if (listening && voice.available) voice.start(0);
+      else engine.current?.play();
+      return;
+    }
     if (listening && voice.available) {
       if (voice.speaking) voice.stop();
       else voice.start();
       return;
     }
     engine.current?.toggle();
-  }, [engine, listening, voice]);
+  }, [engine, listening, voice, snapshot?.finished]);
 
   // Turning the voice off mid-sentence has to silence it, not orphan it.
   useEffect(() => {

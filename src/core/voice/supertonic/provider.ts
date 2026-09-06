@@ -91,9 +91,10 @@ export class SupertonicProvider implements TTSProvider {
   }
   speak(segment: NarrationSegment, options: SpeakOptions, handlers: SpeakHandlers) {
     const generation = ++this.generation;
+    const askedAt = Date.now();
     void this.warmUp(segment, options).then(async (audio) => {
       if (generation !== this.generation) return;
-      await this.play(audio, segment, handlers, generation);
+      await this.play(audio, segment, handlers, generation, askedAt);
     }).catch((error: unknown) => {
       if (generation === this.generation) handlers.onError(error instanceof Error ? error.message : String(error));
     });
@@ -190,14 +191,22 @@ export class SupertonicProvider implements TTSProvider {
       clearTimeout(job.timer);
       this.pending.delete(m.jobId);
       if (m.type === "audio") job.resolve({ samples: m.samples, sampleRate: m.sampleRate });
-      else if (m.type === "ready") job.resolve({ samples: new Float32Array(), sampleRate: 0 });
+      else if (m.type === "ready") {
+        // The worker keeps its own trail; without this, a preparation that went
+        // fine could not say which backend it went fine on.
+        for (const line of m.notes ?? []) {
+          const [stage, ...rest] = line.split(": ");
+          note(`worker/${stage}`, rest.join(": "));
+        }
+        job.resolve({ samples: new Float32Array(), sampleRate: 0 });
+      }
       else job.reject(new Error(m.notes?.length ? `${m.message} (${m.notes[m.notes.length - 1]})` : m.message));
     };
     worker.onerror = () => this.failAll("The voice stopped unexpectedly. Try again.");
     this.worker = worker;
     return worker;
   }
-  private async play(audio: Audio, segment: NarrationSegment, handlers: SpeakHandlers, generation: number) {
+  private async play(audio: Audio, segment: NarrationSegment, handlers: SpeakHandlers, generation: number, askedAt = Date.now()) {
     if (!audio.samples.length || !Number.isFinite(audio.sampleRate) || audio.sampleRate <= 0) throw new Error("The voice returned no audio.");
     this.context ??= new AudioContext();
     const context = this.context;
@@ -229,21 +238,26 @@ export class SupertonicProvider implements TTSProvider {
     source.connect(analyser);
     analyser.connect(context.destination);
     const frame = new Float32Array(analyser.fftSize);
-    let audible = false;
+    // The peak over the sentence, not the first frame to cross the line. A
+    // sentence starts near silence, so the first crossing is always about the
+    // threshold and never about the voice — a number that looked like evidence
+    // and was not.
+    let peak = 0;
     const listen = () => {
-      if (audible || generation !== this.generation) return;
+      if (generation !== this.generation) return;
       analyser.getFloatTimeDomainData(frame);
       let sum = 0;
       for (const sample of frame) sum += sample * sample;
-      const rms = Math.sqrt(sum / frame.length);
-      if (rms > 1e-4) {
-        audible = true;
-        note("audio", `output confirmed, rms ${rms.toFixed(4)}, ${context.sampleRate} Hz`);
-      }
+      peak = Math.max(peak, Math.sqrt(sum / frame.length));
     };
     const startedAt = context.currentTime;
     source.onended = () => {
-      if (!audible) note("audio", "sentence ended with no non-silent sample at the destination");
+      note(
+        "audio",
+        peak > 1e-4
+          ? `output confirmed, peak rms ${peak.toFixed(4)}, ${context.sampleRate} Hz`
+          : `no non-silent sample reached the destination (peak rms ${peak.toFixed(6)})`,
+      );
       source.disconnect();
       analyser.disconnect();
       if (generation !== this.generation) return;
@@ -253,7 +267,7 @@ export class SupertonicProvider implements TTSProvider {
     };
     this.source = source;
     source.start();
-    note("audio", `playback started, ${buffer.duration.toFixed(2)}s, context ${context.state}`);
+    note("audio", `playback started ${Date.now() - askedAt}ms after asking, ${buffer.duration.toFixed(2)}s, context ${context.state}`);
     handlers.onStart?.();
     const step = () => {
       if (generation !== this.generation) return;

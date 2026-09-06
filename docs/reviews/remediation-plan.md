@@ -9,7 +9,7 @@ Base: [auditoria de 05–06/09/2026](app-audit.md), commit `f75539f`. Este docum
 > | A01 posição perdida em recarga | corrigido, com teste | `core/storage/checkpoint.ts`, `tests/checkpoint.test.ts`, E2E de recarga durante leitura |
 > | A02 biblioteca invisível após upgrade | corrigido, com teste | `rebuildLibraryIndex`, `tests/migration.test.ts` |
 > | A03 guarda de IP em IPv6 mapeado | corrigido, com teste | `vite-plugin-fetch.ts`, `tests/fetch-guard.test.ts`, `tests/fetch-proxy.test.ts` |
-> | A04 voz sem reprodução verificável | causa provável corrigida; **áudio ainda não confirmado** | entrada WebGPU recebia o binário `jsep` em vez do `asyncify`; diagnóstico por etapa em `diagnostics.ts` |
+> | A04 voz sem reprodução verificável | **corrigido e confirmado** | entrada WebGPU recebia o binário `jsep` em vez do `asyncify`; [evidência](evidence/voice-confirmed.md) |
 > | A05 vozes remotas | corrigido, com teste | `core/voice/system.ts`, `tests/voice-system.test.ts` |
 > | A06 falha de storage sem recuperação | corrigido | estado de erro e retry em `App`, `SettingsProvider`, `useEngine`, `useLibrary` |
 > | A07–A15 leitura, interface, teclado | corrigidos | ver commits `feat(ui)`, `feat(a11y)`, `fix(ui)` |
@@ -23,8 +23,8 @@ Base: [auditoria de 05–06/09/2026](app-audit.md), commit `f75539f`. Este docum
 > tinha visto: o sheet ficava sob a tab bar num telefone de 664 px, deixando a ação principal
 > impossível de tocar.
 >
-> **Continua em aberto:** confirmação de áudio da Something Voice, um aparelho iOS real, e a
-> primeira instalação offline medida num telefone. Nada disso é aprovação de release.
+> **Continua em aberto:** um aparelho iOS real e a primeira instalação offline medida num
+> telefone. Nada disso é aprovação de release.
 
 Esforço relativo: P = até um conjunto pequeno de mudanças; M = vários componentes/contratos; G = integração com múltiplos cenários. Não são estimativas de prazo.
 

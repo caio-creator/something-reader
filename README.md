@@ -148,9 +148,14 @@ test:e2e` drives a real browser: every format through the real importer worker,
 drag-and-drop, re-import, an invalid file, position surviving a reload mid-read,
 chapter navigation, and the reader's header at 360–1440 px.
 
-Not yet established: Something Voice reaching confirmed audio on a range of
-machines, a real iOS device (the mobile project runs WebKit through Playwright,
-which is not the same thing), and a first offline install measured on a phone.
+Something Voice reaches confirmed audio output: four ONNX sessions on WebGPU,
+first sentence 503–660 ms after asking, peak RMS 0.10–0.14 at the destination,
+and a person confirming they heard it. The trail is in
+`docs/reviews/evidence/voice-confirmed.md`.
+
+Not yet established: that on a range of other machines, a real iOS device (the
+mobile project runs WebKit through Playwright, which is not the same thing), and
+a first offline install measured on a phone.
 
 ## Brand
 
