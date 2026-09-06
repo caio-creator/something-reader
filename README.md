@@ -56,7 +56,12 @@ open. See `docs/research/speed-reading-research.md` for the citations.
 
 Scanned PDFs have no text layer and fail with an honest message rather than a
 blank document. Web links go through a local endpoint, so no third-party reader
-service ever sees what you read; that one path needs `bun run dev` running.
+service ever sees what you read; that one path needs a server that can make the
+request, so the static build does not offer it and asks you to paste instead.
+
+Something stores the text it extracts. Images, complex tables, footnotes and
+links are not preserved the way a full EPUB or PDF viewer preserves them — it is
+a reader for the words.
 
 ## Install
 
@@ -85,16 +90,33 @@ host works. Over HTTPS the service worker registers, and Add to Home Screen
 gives a real icon, a standalone window and full offline use:
 
 ```bash
-bun run build        # dist/ is ~3.9 MB
+bun run build
 ```
 
-Documents still never leave the device — the host only serves the app itself.
-Web-link import is the one feature that needs the local server, since the
-browser cannot fetch other origins on its own.
+Serve `dist/` over HTTPS from any static host. What that costs, measured rather
+than estimated:
+
+| | Size | When it is fetched |
+|---|---|---|
+| App shell | ~3.3 MB | first visit; listed in `dist/shell-manifest.json` and precached |
+| Reading fonts | ~740 KB | when a face is first used |
+| Voice runtime (ONNX/WASM) | ~25 MB | only if Something Voice is turned on |
+| Voice model | ~426 MB | only on an explicit download, into its own cache |
+
+So `dist/` is ~29 MB on disk and a first visit is ~3.3 MB. A reader who never
+turns the voice on never fetches the other 25.
+
+Settings reports how much of the shell is actually cached, so "works offline" is
+something the app can answer rather than something the README claims. A new
+version installs in the background and waits — it will not reload the page under
+you mid-sentence.
+
+Documents still never leave the device: the host only serves the app itself.
 
 ```bash
-bun test        # unit tests
-bun run build   # typecheck + production build
+bun test         # unit tests
+bun run test:e2e # browser tests: every format, through the real importer
+bun run build    # typecheck + production build
 ```
 
 ## Architecture
@@ -109,8 +131,26 @@ Core logic lives in `src/core` and does not import React.
 | `src/core/storage` | a `Storage` seam over IndexedDB, with the original bytes |
 | `src/ui` | tokens, copy, components |
 | `src/app` | screens, providers, hooks |
+| `src/core/voice` | narration segments, the system voices, and Something Voice |
 
-Decisions are recorded in `docs/adr`. Research is in `docs/research`.
+Storage and text-to-speech are browser adapters behind explicit contracts rather
+than DOM-free code: the model, the engine and the importers' parsing are what run
+without a DOM.
+
+Decisions are recorded in `docs/adr`. Research is in `docs/research`. The
+September 2026 audit and the plan that came out of it are in `docs/reviews`.
+
+## What is tested, and what is not
+
+`bun test` covers the model, the engine, the importers' parsing, storage and its
+migrations, the address guard, and the voice provider's protocol. `bun run
+test:e2e` drives a real browser: every format through the real importer worker,
+drag-and-drop, re-import, an invalid file, position surviving a reload mid-read,
+chapter navigation, and the reader's header at 360–1440 px.
+
+Not yet established: Something Voice reaching confirmed audio on a range of
+machines, a real iOS device (the mobile project runs WebKit through Playwright,
+which is not the same thing), and a first offline install measured on a phone.
 
 ## Brand
 

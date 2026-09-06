@@ -1,0 +1,7 @@
+The Plain Text Sample
+
+A first paragraph, long enough that the reader has something to move through
+and a position worth remembering between one visit and the next.
+
+A second paragraph, so the document has more than one block and the engine has
+somewhere to go.
