@@ -1,3 +1,4 @@
+import "@core/polyfills";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "@ui/base.css";

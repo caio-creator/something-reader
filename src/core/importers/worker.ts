@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import "../polyfills";
 import { importBytes } from "./index";
 import { ImportError } from "./types";
 import type { WorkerRequest, WorkerResponse } from "./protocol";
