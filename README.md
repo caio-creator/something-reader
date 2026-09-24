@@ -88,16 +88,14 @@ documents are stored in that phone's browser, not on the Mac — but the Mac has
 to be running, and web-link import needs it because the fetch proxy lives
 there.
 
-**Properly, as an installed app.** The build is a static SPA, so any static
-host works. Over HTTPS the service worker registers, and Add to Home Screen
-gives a real icon, a standalone window and full offline use:
+**Properly, as an installed app.** It is published at
+**https://something-reader.vercel.app**. Open it in Safari or Chrome, then Share
+→ Add to Home Screen: a real icon, a standalone window and full offline use.
+Everything local works there too — link import through the deployment's own
+`/api/fetch`, and Something Voice downloaded straight from Hugging Face.
 
-```bash
-bun run build
-```
-
-Serve `dist/` over HTTPS from any static host. What that costs, measured rather
-than estimated:
+The build is otherwise a static SPA; `dist/` served over HTTPS from any static
+host works, without link import. What it costs, measured rather than estimated:
 
 | | Size | When it is fetched |
 |---|---|---|

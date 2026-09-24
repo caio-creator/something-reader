@@ -53,3 +53,24 @@ that is far cheaper to see than finding it inside a screen.
 Run it in a browser at 414px and 1440px and exercise the whole path: import,
 library, both reader modes, settings, then reload and confirm the position came
 back. A screenshot is not verification.
+
+## Deploying
+
+Production is **https://something-reader.vercel.app**, the Vercel project
+`readsomething` in the personal team. Every push to `main` builds and
+publishes; every other branch gets a preview URL (behind Vercel login).
+
+- `vercel.json` holds the build (`VITE_URL_IMPORT=1 bun run build`), the fetch
+  function's 30 s, and the caching the service worker depends on. Do not add
+  COOP/COEP headers: cross-origin isolation switches the voice onto a threaded
+  path that has never run.
+- `.vercelignore` is an allowlist. A new top-level file the build needs has to
+  be added there, or the deploy will not see it.
+- `/api/fetch` is `api/fetch.ts` over `server/fetch-article.ts` — the same guard
+  the dev server uses — with 20 links per 10 minutes per address in the
+  function, and a firewall rule of 30 per 10 minutes in front of it
+  (`vercel firewall rules list`).
+- `readsomething.vercel.app` belongs to another account; the other names on the
+  project redirect to `something-reader.vercel.app`, so there is one origin —
+  one library, one voice cache — per reader.
+
