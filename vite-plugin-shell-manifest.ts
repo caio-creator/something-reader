@@ -1,9 +1,11 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { Plugin } from "vite";
 
 const TEMPLATE = new URL("./src/sw.js", import.meta.url);
+const PUBLIC = new URL("./public/", import.meta.url);
 const PLACEHOLDER = "__SHELL_BUILD__";
+const DEFAULT_FACES = /^assets\/(inter|literata|jetbrains-mono)-latin(-ext)?-wght-normal-[\w-]+\.woff2$/;
 
 /**
  * The list of files the app needs to open with the network off, and the
@@ -42,9 +44,13 @@ export const shellManifestPlugin = (): Plugin => {
         .filter((file) => {
           // Running last, the page itself is in the bundle; it is cached as `/`.
           if (file.fileName === "index.html") return false;
-          // Fonts are cached when a reader picks the face that needs them, and
-          // the model runtime is megabytes that a reader who never turns the
-          // voice on should not pay for on first load.
+          // The default faces in Latin are the shell: every page is set in them.
+          // Left to be cached on use, they lived in a cache each new version
+          // sweeps, and the first offline open after an update fell back to a
+          // system font. Other scripts, and OpenDyslexic, stay on-demand.
+          if (DEFAULT_FACES.test(file.fileName)) return true;
+          // The model runtime is megabytes that a reader who never turns the
+          // voice on should not pay for on first load; the voice pack keeps it.
           return !/\.(woff2?|wasm)$/i.test(file.fileName);
         })
         .map((file) => `/${file.fileName}`)
@@ -53,7 +59,11 @@ export const shellManifestPlugin = (): Plugin => {
       const template = readFileSync(TEMPLATE, "utf8");
       if (!template.includes(PLACEHOLDER)) this.error(`src/sw.js no longer contains ${PLACEHOLDER}.`);
 
-      const shell = ["/", "/manifest.webmanifest", ...files];
+      // `public/` is the web manifest and the icons it and the page name —
+      // a few kilobytes, and without them an offline open logs failures and
+      // an installed app loses its icon.
+      const statics = readdirSync(PUBLIC).filter((name) => !name.startsWith(".")).map((name) => `/${name}`).sort();
+      const shell = ["/", ...statics, ...files];
       // The worker's own source is part of the version: a change to how it
       // caches is a new worker even when no asset changed.
       const version = hash(`${shell.join("\n")}\n${template}`);
