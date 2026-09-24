@@ -8,13 +8,23 @@
  * Documents themselves live in IndexedDB and were always offline. This only
  * caches the app that reads them.
  *
- * What it caches is not guessed. `shell-manifest.json` is emitted by the build
- * and lists every file needed to open with the network off, named by content
- * hash — so it is the version too. A17: this used to precache `/` alone and
+ * What it caches is not guessed. The build lists every file needed to open
+ * with the network off, named by content hash, and writes that list into this
+ * script — so it is the version too. A17: this used to precache `/` alone and
  * pick up the rest as they happened to be requested, which reopens an app that
  * has already been used and says nothing about a first visit going offline.
+ *
+ * Written in, not fetched. A browser only notices a new worker when the bytes
+ * of this script change, and this file used to be copied untouched into every
+ * build while it read its version from `shell-manifest.json` at runtime — so
+ * after the first install, `install` and `activate` never ran again and no
+ * update was ever offered. It also meant a waiting worker and the active one
+ * both answered to whatever manifest the network had, not to their own build.
+ *
+ * This is a template: `vite-plugin-shell-manifest.ts` replaces the placeholder
+ * below and emits the result as `/sw.js`. Only a production build registers it.
  */
-const FALLBACK_VERSION = "something-v1";
+const BUILD = __SHELL_BUILD__;
 const SHELL = "/";
 const MANIFEST = "/shell-manifest.json";
 
@@ -29,30 +39,24 @@ const MANIFEST = "/shell-manifest.json";
 const KEEP = /^something-voice-/;
 const OURS = /^something-/;
 
-const cacheName = (version) => `something-shell-${version}`;
+const CACHE = `something-shell-${BUILD.version}`;
 
-const readManifest = async () => {
-  try {
-    const response = await fetch(MANIFEST, { cache: "no-cache" });
-    if (!response.ok) return null;
-    const manifest = await response.json();
-    if (!manifest || typeof manifest.version !== "string" || !Array.isArray(manifest.files)) return null;
-    return manifest;
-  } catch {
-    // Offline during an update check, or a build without the plugin.
-    return null;
-  }
-};
+/*
+ * Every file here is named by its content hash, so no header can make a stored
+ * copy the wrong one. `Vary` would anyway: the page loads its scripts with
+ * `crossorigin`, which sends `Origin`, and a host that answers `Vary: Origin`
+ * (vite preview does) turned each precached file into a miss for the page that
+ * asked for it — and readiness counted them as missing.
+ */
+const MATCH = { ignoreVary: true };
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
-      const manifest = await readManifest();
-      const cache = await caches.open(cacheName(manifest?.version ?? FALLBACK_VERSION));
-      const files = manifest ? [...new Set([SHELL, MANIFEST, ...manifest.files])] : [SHELL];
+      const cache = await caches.open(CACHE);
       // One failure must not abandon the whole install; the app still works,
       // it is simply not fully prepared, and `readiness` will say so.
-      await Promise.all(files.map((file) => cache.add(file).catch(() => {})));
+      await Promise.all(BUILD.files.map((file) => cache.add(file).catch(() => {})));
       // Deliberately no skipWaiting: a new version taking over mid-sentence
       // reloads the page under someone who is reading. It waits until asked.
     })(),
@@ -62,12 +66,10 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
-      const manifest = await readManifest();
-      const mine = cacheName(manifest?.version ?? FALLBACK_VERSION);
       const keys = await caches.keys();
       await Promise.all(
         keys
-          .filter((key) => OURS.test(key) && !KEEP.test(key) && key !== mine)
+          .filter((key) => OURS.test(key) && !KEEP.test(key) && key !== CACHE)
           .map((key) => caches.delete(key)),
       );
       await self.clients.claim();
@@ -91,28 +93,22 @@ self.addEventListener("message", (event) => {
   if (event.data === "READINESS") {
     event.waitUntil(
       (async () => {
-        const manifest = await readManifest();
-        const version = manifest?.version ?? FALLBACK_VERSION;
-        const cache = await caches.open(cacheName(version));
-        const files = manifest ? manifest.files : [SHELL];
-        const found = await Promise.all(files.map((file) => cache.match(file)));
+        const cache = await caches.open(CACHE);
+        const found = await Promise.all(BUILD.files.map((file) => cache.match(file, MATCH)));
         const have = found.filter(Boolean).length;
         event.source?.postMessage({
           type: "readiness",
-          version,
-          ready: have === files.length,
+          version: BUILD.version,
+          ready: have === BUILD.files.length,
           have,
-          total: files.length,
+          total: BUILD.files.length,
         });
       })(),
     );
   }
 });
 
-const currentCache = async () => {
-  const manifest = await readManifest();
-  return caches.open(cacheName(manifest?.version ?? FALLBACK_VERSION));
-};
+const currentCache = () => caches.open(CACHE);
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
@@ -135,7 +131,7 @@ self.addEventListener("fetch", (event) => {
           void currentCache().then((cache) => cache.put(SHELL, copy));
           return response;
         })
-        .catch(async () => (await caches.match(SHELL)) ?? Response.error()),
+        .catch(async () => (await caches.match(SHELL, MATCH)) ?? Response.error()),
     );
     return;
   }
@@ -143,7 +139,7 @@ self.addEventListener("fetch", (event) => {
   // Assets are content-hashed, so a hit is always correct. Refresh in the
   // background for the next load.
   event.respondWith(
-    caches.match(request).then((hit) => {
+    caches.match(request, MATCH).then((hit) => {
       const network = fetch(request)
         .then((response) => {
           if (response.ok) {

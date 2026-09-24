@@ -25,7 +25,7 @@ Core code is in `src/core` and must stay UI-free — no React imports below
   fingerprint plus a char offset (ADR-011). If you change how blocks are built,
   run `tests/model.test.ts` — that is what protects resume.
 - **The voice is a 409 MB download, and nothing else in the app is.** It lives
-  in Cache Storage under `something-voice-*`, which `public/sw.js` deliberately
+  in Cache Storage under `something-voice-*`, which `src/sw.js` deliberately
   refuses to sweep on activate — otherwise every app update would charge the
   reader for it again. `pack.ts` describes the pack and imports no ONNX, so the
   main bundle stays free of the inference engine; if you find yourself importing
