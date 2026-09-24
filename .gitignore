@@ -36,3 +36,6 @@ bun-debug.log*
 
 # Playwright MCP scratch output
 .playwright-mcp/
+
+# Vercel CLI link (project id) — `.env.local` it writes is covered by *.local
+.vercel
