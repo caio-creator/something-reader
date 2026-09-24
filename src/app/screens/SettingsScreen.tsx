@@ -5,7 +5,7 @@ import { useStorage } from "../providers/storage-context";
 import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/types";
 import { SystemTTSProvider } from "@core/voice/system";
 import { SupertonicProvider } from "@core/voice/supertonic/provider";
-import { PACK } from "@core/voice/supertonic/pack";
+import { LICENSE_URL, PACK } from "@core/voice/supertonic/pack";
 import { keepStorage } from "@core/storage/persistence";
 import type { TTSProvider, VoiceOption } from "@core/voice/types";
 import { useSettings } from "../providers/settings-context";
@@ -230,6 +230,12 @@ export const SettingsScreen = () => {
         <p className="group-note">
           {settings.voiceEngine === "natural" ? copy.voiceNaturalBody : copy.voiceSystemBody}
         </p>
+        {settings.voiceEngine === "natural" && (
+          <p className="group-note is-quiet">
+            {copy.voiceLicense}{" "}
+            <a href={LICENSE_URL} target="_blank" rel="noreferrer">{copy.voiceLicenseLink}</a>
+          </p>
+        )}
         {settings.voiceEngine === "natural" && (
           <Row icon="database" label={copy.voiceNatural} hint={formatBytes(PACK.bytes)} inline>
             {packInstalled ? (

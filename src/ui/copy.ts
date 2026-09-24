@@ -103,6 +103,10 @@ export const copy = {
   voiceNaturalBody:
     "Something Voice runs here, on this machine. One download of about 400 MB, then it works with the network off and nothing you read is ever sent anywhere.",
   voiceSystemBody: "Local voices for the document language. Text is never sent to a speech service.",
+  /* The model's licence (OpenRAIL-M) binds whoever hands it on to pass its use
+     restrictions to the people using it. Said before the download, not after. */
+  voiceLicense: "The voice is Supertonic 3 by Supertone, under the OpenRAIL-M license. Downloading it means agreeing to its use restrictions.",
+  voiceLicenseLink: "Read the license",
   voiceDownload: "Download",
   voiceInstalled: "Installed",
   voiceRemove: "Remove voice",

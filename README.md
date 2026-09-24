@@ -168,6 +168,13 @@ A campaign line, not the product name: *Read this shit.*
 
 Apache 2.0.
 
+Something Voice is a separate work: Supertone's
+[Supertonic 3](https://huggingface.co/Supertone/supertonic-3), under the
+[BigScience OpenRAIL-M license](https://huggingface.co/Supertone/supertonic-3/blob/3cadd1ee6394adea1bd021217a0e650ede09a323/LICENSE).
+It is not in this repository; the browser downloads it from Hugging Face when a
+reader asks, after being shown the license and its use restrictions. See
+[ADR-012](docs/adr/ADR-012-voice-model-license.md).
+
 ---
 
 `references/` holds material from other products, for study only. It is

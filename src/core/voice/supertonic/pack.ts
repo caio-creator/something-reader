@@ -12,6 +12,12 @@ import runtimeUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-s
 
 export const HOST = "https://huggingface.co/Supertone/supertonic-3/resolve/3cadd1ee6394adea1bd021217a0e650ede09a323";
 /**
+ * BigScience OpenRAIL-M, at the same pinned revision. Distributing the model
+ * obliges passing its use restrictions and a copy of the licence to the people
+ * who use it — so the app links it where the download is offered. ADR-012.
+ */
+export const LICENSE_URL = `${HOST.replace("/resolve/", "/blob/")}/LICENSE`;
+/**
  * Bumped with the pinned revision above. The cache is keyed by URL, so entries
  * fetched from `resolve/main` can never match the pinned paths again — they are
  * dead weight, and sw.js keeps every `something-voice-` cache on purpose, so
