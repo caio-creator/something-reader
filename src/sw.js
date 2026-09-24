@@ -116,7 +116,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  // The local article fetcher must always hit the network.
+  // The article fetcher must always hit the network.
   if (url.pathname.startsWith("/api/")) return;
   // Asking the cache whether the cache is current answers itself.
   if (url.pathname === MANIFEST) return;

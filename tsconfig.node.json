@@ -16,6 +16,9 @@
   },
   "include": [
     "vite.config.ts",
-    "vite-plugin-fetch.ts"
+    "vite-plugin-fetch.ts",
+    "vite-plugin-shell-manifest.ts",
+    "server",
+    "api"
   ]
 }

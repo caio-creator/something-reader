@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { isBlockedIp } from "../vite-plugin-fetch";
+import { isBlockedIp } from "../server/fetch-article";
 
 describe("ssrf address guard", () => {
   test("blocks loopback, private and link-local IPv4", () => {

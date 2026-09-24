@@ -51,13 +51,16 @@ open. See `docs/research/speed-reading-research.md` for the citations.
 | DOCX | mammoth |
 | Markdown | markdown-it |
 | HTML, TXT | built in |
-| Web link | Readability, fetched by your own dev server |
+| Web link | Readability, fetched by Something's own endpoint |
 | Pasted text | built in |
 
 Scanned PDFs have no text layer and fail with an honest message rather than a
-blank document. Web links go through a local endpoint, so no third-party reader
-service ever sees what you read; that one path needs a server that can make the
-request, so the static build does not offer it and asks you to paste instead.
+blank document. Web links are fetched by Something's own endpoint — the dev
+server when running from source, a function on the public deployment — so no
+third-party reader service ever sees what you read. On the public site the
+address you import passes through that function; the page is parsed in your
+browser and nothing is stored or logged. A `dist/` copied to any other static
+host has no endpoint, so it does not offer links and asks you to paste instead.
 
 Something stores the text it extracts. Images, complex tables, footnotes and
 links are not preserved the way a full EPUB or PDF viewer preserves them — it is
@@ -99,11 +102,11 @@ than estimated:
 | | Size | When it is fetched |
 |---|---|---|
 | App shell | ~3.6 MB | first visit; listed in `dist/shell-manifest.json` and precached |
-| Reading fonts | ~740 KB | when a face is first used |
+| Other reading fonts | ~430 KB | when a face or script is first used (the default faces are in the shell) |
 | Voice runtime (ONNX/WASM) | ~25 MB | only if Something Voice is turned on |
-| Voice model | ~398 MB (+ 25 MB runtime) | only on an explicit download, into its own cache |
+| Voice model | ~398 MB | only on an explicit download, into its own cache |
 
-So `dist/` is ~29 MB on disk and a first visit is ~3.3 MB. A reader who never
+So `dist/` is ~29 MB on disk and a first visit is ~3.6 MB. A reader who never
 turns the voice on never fetches the other 25.
 
 Settings reports how much of the shell is actually cached, so "works offline" is
@@ -111,7 +114,8 @@ something the app can answer rather than something the README claims. A new
 version installs in the background and waits — it will not reload the page under
 you mid-sentence.
 
-Documents still never leave the device: the host only serves the app itself.
+Documents never leave the device. The host serves the app and, for link import
+only, fetches the page you asked for.
 
 ```bash
 bun test         # unit tests

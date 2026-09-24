@@ -7,8 +7,9 @@ import type { SomethingDocument } from "../model/types";
  *
  * Readability and DOMPurify both need a real DOM, so this one step stays on the
  * main thread — an article is small enough that it does not block anything. The
- * network hop goes through the local dev server (see vite-plugin-fetch.ts), so
- * no third-party service ever sees what is being read.
+ * network hop goes through Something's own `/api/fetch` (server/fetch-article.ts,
+ * served by the dev server or the public deployment's function), so no
+ * third-party service ever sees what is being read.
  */
 export const importUrl = async (rawUrl: string): Promise<SomethingDocument> => {
   let target: URL;

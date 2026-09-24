@@ -15,6 +15,12 @@ export type Capabilities = {
   canImportUrl: boolean;
 };
 
+/**
+ * The dev server always has the fetcher. A build has it only when it will be
+ * served next to `api/fetch.ts` — the public deployment sets
+ * `VITE_URL_IMPORT=1`; a `dist/` copied to any other static host does not, and
+ * offers paste instead.
+ */
 export const capabilities: Capabilities = {
-  canImportUrl: import.meta.env.DEV,
+  canImportUrl: import.meta.env.DEV || import.meta.env.VITE_URL_IMPORT === "1",
 };

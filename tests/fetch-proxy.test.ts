@@ -1,7 +1,7 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { fetchArticle, resolvePublic, type Fetched, type Pin } from "../vite-plugin-fetch";
+import { fetchArticle, resolvePublic, type Fetched, type Pin } from "../server/fetch-article";
 
 /**
  * The importer's rules, against a server that actually answers.
