@@ -5,6 +5,7 @@ import { markdownImporter } from "@core/importers/markdown";
 import { useStorage } from "../providers/storage-context";
 import { MAX_IMPORT_BYTES } from "@core/importers";
 import type { LibraryItem } from "@core/storage/types";
+import { keepStorage } from "@core/storage/persistence";
 import type { SomethingDocument } from "@core/model/types";
 import { SAMPLE_MARKDOWN } from "../sample";
 
@@ -20,7 +21,9 @@ export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
   const [state, setState] = useState<ImportState>(IDLE);
 
   const refresh = useCallback(async () => {
-    setItems(await listLibrary());
+    const library = await listLibrary();
+    setItems(library);
+    return library;
   }, [listLibrary]);
 
   useEffect(() => {
@@ -33,7 +36,8 @@ export const useLibrary = (onImported: (doc: SomethingDocument) => void) => {
       try {
         const { doc, original } = await task();
         await saveDocument(doc, original);
-        await refresh();
+        const library = await refresh();
+        void keepStorage("import", { libraryCount: library.length });
         setState(IDLE);
         onImported(doc);
       } catch (err) {

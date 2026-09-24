@@ -6,6 +6,7 @@ import { ANCHOR_COLORS, NEUTRAL_ANCHOR, type ReaderSettings } from "@core/model/
 import { SystemTTSProvider } from "@core/voice/system";
 import { SupertonicProvider } from "@core/voice/supertonic/provider";
 import { PACK } from "@core/voice/supertonic/pack";
+import { keepStorage } from "@core/storage/persistence";
 import type { TTSProvider, VoiceOption } from "@core/voice/types";
 import { useSettings } from "../providers/settings-context";
 import { formatBytes } from "../format";
@@ -43,7 +44,7 @@ const PRESETS: { name: string; patch: Partial<ReaderSettings> }[] = [
 export const SettingsScreen = () => {
   const { settings, update } = useSettings();
   const toast = useToast();
-  const { clearAll, estimateUsage } = useStorage();
+  const { clearAll, estimateUsage, listLibrary } = useStorage();
   const [usage, setUsage] = useState(0);
   const [confirming, setConfirming] = useState(false);
 
@@ -85,6 +86,7 @@ export const SettingsScreen = () => {
       if (session !== downloadSession.current) return;
       setPackInstalled(await naturalProvider.ready(settings.voice ?? undefined));
       setPackProgress(null);
+      void listLibrary().then((library) => keepStorage("voice", { libraryCount: library.length }));
     } catch (reason) {
       if (session === downloadSession.current) setPackError(reason instanceof Error ? reason.message : "Could not prepare the voice.");
     } finally { if (session === downloadSession.current) setDownloading(false); }
