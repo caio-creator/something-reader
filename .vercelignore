@@ -1,0 +1,18 @@
+# An allowlist, not a denylist: only what the build and the function need is
+# uploaded. `references/` holds other products' material and must never leave
+# this machine; a denylist would only be as safe as the last folder someone
+# remembered to add.
+/*
+!/api
+!/server
+!/src
+!/public
+!/index.html
+!/package.json
+!/bun.lock
+!/tsconfig.json
+!/tsconfig.node.json
+!/vite.config.ts
+!/vite-plugin-fetch.ts
+!/vite-plugin-shell-manifest.ts
+!/vercel.json
