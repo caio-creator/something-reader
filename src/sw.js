@@ -31,7 +31,7 @@ const MANIFEST = "/shell-manifest.json";
 /*
  * Caches that are not this shell but are also not ours to throw away.
  *
- * The voice pack is a 426 MB download the reader agreed to once. Sweeping
+ * The voice pack is a 398 MB download the reader agreed to once. Sweeping
  * every cache on activate would make every app update charge them for it
  * again, which is the opposite of what "works offline afterwards" promised.
  * The pack manages its own versions; this only has to stay out of the way.

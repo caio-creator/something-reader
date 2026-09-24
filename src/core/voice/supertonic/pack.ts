@@ -7,6 +7,8 @@
  * split means the reader ships without half a megabyte of inference engine for
  * people who never turn the voice on.
  */
+/* eslint-disable-next-line import/no-relative-packages */
+import runtimeUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm?url";
 
 export const HOST = "https://huggingface.co/Supertone/supertonic-3/resolve/3cadd1ee6394adea1bd021217a0e650ede09a323";
 /**
@@ -17,20 +19,39 @@ export const HOST = "https://huggingface.co/Supertone/supertonic-3/resolve/3cadd
  */
 export const CACHE = "something-voice-v2";
 
-/** Sizes are what the server reports today; they drive the progress bar. */
+/**
+ * Exact sizes at the pinned revision, from the Hugging Face tree API. They
+ * drive the progress bar, so they have to be the real ones: rounded up, they
+ * added to 426 MB against 398 MB actually sent, and the bar stopped at 93%
+ * before jumping to "initializing". Re-read them when HOST moves.
+ */
+const FILES = [
+  { key: "vector_estimator", path: "onnx/vector_estimator.onnx", bytes: 256_534_781 },
+  { key: "vocoder", path: "onnx/vocoder.onnx", bytes: 101_424_195 },
+  { key: "text_encoder", path: "onnx/text_encoder.onnx", bytes: 36_416_150 },
+  { key: "duration_predictor", path: "onnx/duration_predictor.onnx", bytes: 3_700_147 },
+  { key: "unicode_indexer", path: "onnx/unicode_indexer.json", bytes: 277_676 },
+  { key: "tts", path: "onnx/tts.json", bytes: 8_253 },
+] as const;
+
 export const PACK = {
   id: "supertonic-3",
   name: "Natural",
-  bytes: 426_490_000,
-  files: [
-    { key: "vector_estimator", path: "onnx/vector_estimator.onnx", bytes: 268_000_000 },
-    { key: "vocoder", path: "onnx/vocoder.onnx", bytes: 117_000_000 },
-    { key: "text_encoder", path: "onnx/text_encoder.onnx", bytes: 37_000_000 },
-    { key: "duration_predictor", path: "onnx/duration_predictor.onnx", bytes: 4_200_000 },
-    { key: "unicode_indexer", path: "onnx/unicode_indexer.json", bytes: 278_000 },
-    { key: "tts", path: "onnx/tts.json", bytes: 12_000 },
-  ],
+  bytes: FILES.reduce((sum, file) => sum + file.bytes, 0),
+  files: FILES,
 } as const;
+
+/**
+ * The inference runtime's own binary — 25 MB served by this app, not by the
+ * model host. See assets.ts for why it must be this exact build.
+ *
+ * It belongs to the pack as much as the model does: without it the voice does
+ * not start, with or without a network. The service worker only kept it in the
+ * shell cache, which every new version sweeps, so a pack reported as installed
+ * could fail offline the day after a deploy. It is now kept beside the model
+ * and counted in `isInstalled`. Only a URL — no inference code comes with it.
+ */
+export const RUNTIME: string = runtimeUrl;
 
 /**
  * The ten voices the model ships with. Voice Builder, which turned a reference
@@ -63,7 +84,8 @@ export const isInstalled = async (voice: VoiceId = "F1"): Promise<boolean> => {
   if (!store) return false;
   const checks = await Promise.all(PACK.files.map((f) => store.match(`${HOST}/${f.path}`)));
   const style = await store.match(`${HOST}/voice_styles/${voice}.json`);
-  return checks.every(Boolean) && Boolean(style);
+  const runtime = await store.match(RUNTIME);
+  return checks.every(Boolean) && Boolean(style) && Boolean(runtime);
 };
 
 /** Drop voice caches from an older pinned revision, keeping the current one. */

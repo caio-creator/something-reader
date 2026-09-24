@@ -15,9 +15,10 @@ import * as ort from "onnxruntime-web/webgpu";
 // pair was mismatched, so the runtime was handed a binary its glue does not
 // know how to instantiate — and, because the fallback below reused the same
 // binary, it failed twice and said nothing.
-/* eslint-disable-next-line import/no-relative-packages */
-import wasmUrl from "../../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm?url";
-import { HOST, openCache, PACK, type Progress, type VoiceId } from "./pack";
+//
+// The import itself lives in pack.ts as `RUNTIME`, because whether the pack is
+// installed depends on this file too.
+import { CACHE, HOST, openCache, PACK, RUNTIME, type Progress, type VoiceId } from "./pack";
 import { note, reason } from "./diagnostics";
 import type { Cfgs, Model, Sessions, Style } from "./inference";
 
@@ -89,11 +90,39 @@ const fetchCached = async (path: string, onChunk: (bytes: number) => void): Prom
 let configured = false;
 const configure = () => {
   if (configured) return;
-  ort.env.wasm.wasmPaths = { wasm: wasmUrl };
+  ort.env.wasm.wasmPaths = { wasm: RUNTIME };
   ort.env.wasm.numThreads = globalThis.crossOriginIsolated
     ? Math.min(4, navigator.hardwareConcurrency || 1)
     : 1;
   configured = true;
+};
+
+/**
+ * Keep the runtime binary in the voice cache, beside the model.
+ *
+ * The service worker answers from any cache, so once it is here the runtime
+ * loads with the network off even after a new version has swept the shell
+ * cache. A runtime from an older build is dropped: its name carries a content
+ * hash, so it can never be asked for again.
+ */
+const RUNTIME_FILE = /\/ort-wasm[^/]*\.wasm$/;
+const keepRuntime = async (): Promise<void> => {
+  const store = await openCache();
+  if (!store) return;
+  try {
+    const current = new URL(RUNTIME, globalThis.location.href).href;
+    for (const request of await store.keys()) {
+      if (RUNTIME_FILE.test(new URL(request.url).pathname) && request.url !== current) await store.delete(request);
+    }
+    if (await store.match(current)) return;
+    const response = await fetch(current);
+    if (response.ok) await store.put(current, response);
+    note("runtime", `kept in ${CACHE}`);
+  } catch (error) {
+    // Out of quota or offline: the voice still starts now, it just needs the
+    // network for the runtime next time.
+    note("runtime", `not kept (${reason(error)})`);
+  }
 };
 
 /**
@@ -131,6 +160,8 @@ export const loadModel = async (onProgress?: (p: Progress) => void): Promise<Mod
     buffers.set(file.key, await fetchCached(file.path, tick));
     note("download", `${file.key} ready`);
   }
+
+  await keepRuntime();
 
   const text = (key: string) => new TextDecoder().decode(buffers.get(key)!);
   const cfgs = JSON.parse(text("tts")) as Cfgs;

@@ -101,7 +101,7 @@ than estimated:
 | App shell | ~3.3 MB | first visit; listed in `dist/shell-manifest.json` and precached |
 | Reading fonts | ~740 KB | when a face is first used |
 | Voice runtime (ONNX/WASM) | ~25 MB | only if Something Voice is turned on |
-| Voice model | ~426 MB | only on an explicit download, into its own cache |
+| Voice model | ~398 MB (+ 25 MB runtime) | only on an explicit download, into its own cache |
 
 So `dist/` is ~29 MB on disk and a first visit is ~3.3 MB. A reader who never
 turns the voice on never fetches the other 25.
